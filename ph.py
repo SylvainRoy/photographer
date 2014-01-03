@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 
+# todo:
+#  - optimize mimimization (e.g. x^3)
+#  - determine init point
+#  - better handling of situation where the optimization get out of the acceptable zone
+#  - real picture!!!
+
 from PIL import Image, ImageDraw
 from math import sqrt, fabs
 import numpy as np
