@@ -99,6 +99,13 @@ class TestPositionLens(unittest.TestCase):
         self.assert_(fabs(res['projections'][2][0] - 250) < 10**-5)
         self.assert_(fabs(res['projections'][2][1] - 100) < 10**-5)
 
+    def test_error(self):
+        # photographer is on a summit!
+        res = ph.position_lens((300, 100),
+                               (100, 400), (400, 400), (300, 100),
+                               -106.06601717798213, 0, 106.06601717798213)
+        self.assert_(fabs(res['lens'][0] - 300) == 0)
+        self.assert_(fabs(res['lens'][1] - 100) == 0)
         
 
 if __name__ == '__main__':

@@ -3,6 +3,7 @@
 from PIL import Image, ImageDraw
 from math import sqrt, fabs
 import numpy as np
+from scipy.optimize import minimize
 import sys
 
 
@@ -13,13 +14,10 @@ def display(text, activation=True):
 
 def intersection_lines((x1, y1),(x2, y2), (x3, y3),(x4, y4)):
     """Return the intersection of two lines defined by points."""
-    num = (x4-x3)*(y1-y3)-(y4-y3)*(x1-x3)
-    den = (y4-y3)*(x2-x1)-(x4-x3)*(y2-y1)
+    num = 1.0*(x4-x3)*(y1-y3)-(y4-y3)*(x1-x3)
+    den = 1.0*(y4-y3)*(x2-x1)-(x4-x3)*(y2-y1)
     if den == 0:
-        if num == 0:
-            return (x1, y1)
-        else:
-            return None
+        raise RuntimeError("Lines do not intersect in intersection_lines")
     ua = num / den
     return (x1+ua*(x2-x1), y1+ua*(y2-y1))
 
@@ -30,7 +28,7 @@ def distance((x1, y1), (x2, y2)):
 
 
 def dot((x1, y1), (x2, y2)):
-    """Return the dot product of two arrays."""
+    """Return the dot product of two vectors."""
     return 1.0*x1*x2+y1*y2
 
 
@@ -58,61 +56,48 @@ def position_lens(p, s1, s2, s3, os1, os2, os3):
      - the positions of the three summits on the picture
        (os1, os2, os3 which are relative to the center)
      """
-    # todo:
-    #  - detection of convergence before 50 iterations
     delta12 = fabs(os2-os1)
     delta23 = fabs(os3-os2)
-    alpha1 = alpha3 = .5
-    speed1 = speed3 = .5
-    for i in range(0, 50):
-        print "\nloop ", i
-        print "  alpha1=%f, alpha3=%f" % (alpha1, alpha3)
-        print "  speed1=%f, speed3=%f" % (speed1, speed3)
+    def error_to_minimize(alpha):
+        #print "error_to_minimize(%s)" % repr(alpha)
         # Compute s1_ and s3_ on [p, s1] and [p, s2] based on alphas
-        s1_ = ((1-alpha1)*p[0]+alpha1*s1[0], (1-alpha1)*p[1]+alpha1*s1[1])
-        s3_ = ((1-alpha3)*p[0]+alpha3*s3[0], (1-alpha3)*p[1]+alpha3*s3[1])
-        print "  s1_=%s, s3_= %s" % (repr(s1_), repr(s3_))
+        s1_ = ((1-alpha[0])*p[0]+alpha[0]*s1[0], (1-alpha[0])*p[1]+alpha[0]*s1[1])
+        s3_ = ((1-alpha[1])*p[0]+alpha[1]*s3[0], (1-alpha[1])*p[1]+alpha[1]*s3[1])
+        # print "  s1_=%s, s3_= %s" % (repr(s1_), repr(s3_))
         # Compute s2_ as intersection of [p, s2] and [s1_, s3_]
         s2_ = intersection_lines(s1_, s3_, p, s2)
-        print "  s2_= %s" % (repr(s2_))
-        # Compute distance of proj of summits on lens
-        dist12_ = distance(s1_, s2_)
-        dist23_ = distance(s2_, s3_)
-        print "  dist12_=%f (target is %f)" % (dist12_, delta12)
-        print "  dist23_=%f (target is %f)" % (dist23_, delta23)
+        # print "  s2_= %s" % (repr(s2_))
+        # Compute distance of projections of summits on lens
+        dist12_ = distance(s1_, s2_)  # todo: could be replaced by s2_.x - s1_.x
+        dist23_ = distance(s2_, s3_)  # todo: could be replaced by s2_.x - s1_.x
+        # print "  dist12_=%f (target is %f)" % (dist12_, delta12)
+        # print "  dist23_=%f (target is %f)" % (dist23_, delta23)
         # Then compare them with expected values
         error1 = fabs(dist12_ - delta12)
         error3 = fabs(dist23_ - delta23)
-        print "  error1=%f" % error1
-        print "  error3=%f" % error3
-        # Update alpha accordingly
-        if error1 > error3:
-            print "  changing 1"
-            if dist12_ > delta12:
-                print "    decreasing alpha1"
-                alpha1 = alpha1 - speed1
-                speed1 = .6 * speed1
-                print "    new alpha1: %f, new speed1: %f" % (alpha1, speed1)
-            elif dist12_ < delta12:
-                print "    increasing alpha1"
-                alpha1 = alpha1 + speed1
-                speed1 = .6 * speed1
-                print "    new alpha1: %f, new speed1: %f" % (alpha1, speed1)
-        else:
-            print "  changing 3"
-            if dist23_ > delta23:
-                print "    decreasing alpha3"
-                alpha3 = alpha3 - speed3
-                speed3 = .6 * speed3
-                print "    new alpha3: %f, new speed3: %f" % (alpha3, speed3)
-            elif dist23_ < delta23:
-                print "    increasing alpha3"
-                alpha3 = alpha3 + speed3
-                speed3 = .6 * speed3
-                print "    new alpha3: %f, new speed3: %f" % (alpha3, speed3)
-    print "  s1_=%s, s3_= %s" % (repr(s1_), repr(s3_))
-    print "  s2_= %s" % (repr(s2_))
-    # Compute position of center of photo
+        # print "  error=%f  (%f + %f)" % (error1**2 + error3**2, error1, error3)
+        return error1**2 + error3**2
+    res = minimize(error_to_minimize, [.5,.5])
+    #res = minimize(error_to_minimize, [.5,.5], options={'disp':True, 'xtol':1e-8})
+    # cons = ({'type': 'ineq', 'fun': lambda x: np.array([x[0]])},
+    #         {'type': 'ineq', 'fun': lambda x: np.array([1-x[0]])},
+    #         {'type': 'ineq', 'fun': lambda x: np.array([x[1]])},
+    #         {'type': 'ineq', 'fun': lambda x: np.array([1-x[1]])})
+    # res = minimize(error_to_minimize, [.5,.5], 
+    #                constraints=cons, 
+    #                method="SLSQP", 
+    #                options={'disp':True, 'xtol':1e-8})
+    # print "res: " + str(res)
+    alpha = res.x
+    # print "alpha: " + repr(alpha)
+    # Compute s1_ and s3_ on [p, s1] and [p, s2] based on alphas returned by optimizer
+    s1_ = ((1-alpha[0])*p[0]+alpha[0]*s1[0], (1-alpha[0])*p[1]+alpha[0]*s1[1])
+    s3_ = ((1-alpha[1])*p[0]+alpha[1]*s3[0], (1-alpha[1])*p[1]+alpha[1]*s3[1])
+    # Compute s2_ as intersection of [p, s2] and [s1_, s3_]
+    s2_ = intersection_lines(s1_, s3_, p, s2)
+    # print "  s1_=%s, s3_= %s" % (repr(s1_), repr(s3_))
+    # print "  s2_= %s" % (repr(s2_))
+    # Compute position of center of picture
     f = 1.0*os1/(os3-os1)
     m = (s1_[0] - f*(s3_[0]-s1_[0]),
          s1_[1] - f*(s3_[1]-s1_[1]))
@@ -121,10 +106,58 @@ def position_lens(p, s1, s2, s3, os1, os2, os3):
     r = ((p[0]-s1_[0])*(s3_[0]-s1_[0])+(p[1]-s1_[1])*(s3_[1]-s1_[1])) / den
     o = (s1_[0] + r*(s3_[0]-s1_[0]),
          s1_[1] + r*(s3_[1]-s1_[1]))
-    print "center of lens (O): %s" % repr(o)
+    # print "center of lens (O): %s" % repr(o)
     return {"lens": o,
             "picture": m,
             "projections": (s1_, s2_, s3_)}
+
+
+def position_photograper(init, s0, s1, s2, s3, s4, os0, os1, os2, os3, os4, verbose=False, map=None):
+    # define error function to minimize
+    path = []
+    def error_to_minimize(position):
+        display("Position: " + repr(position), verbose)
+        path.append(position)
+        position = (position[0], position[1])
+        # evaluate lens position for the given photographer position
+        res = position_lens(position, s0, s2, s4, os0, os2, os4)
+        lens = res["lens"]
+        # if photographer on a summit, then lens will end up being on this summit
+        if lens == position:
+            raise RuntimeError("Photographer cannot be on a summit!")
+        (s0_, s2_, s4_) = res["projections"]
+        display("  Estimation of lens position: " + repr(res["lens"]), verbose)
+        display("  Estimation of pic position: " + repr(res["picture"]), verbose)
+        display("  Projection of A on lens: " + repr(s0_), verbose)
+        display("  Projection of C on lens: " + repr(s2_), verbose)
+        display("  Projection of E on lens: " + repr(s4_), verbose)
+        # Compute expected projections of summits 1 and 3 on lens
+        S0S4 = (s4_[0]-s0_[0], s4_[1]-s0_[1])
+        alpha1 = 1.0 * (os1-os0) / (os4-os0)
+        s1_ = (s0_[0] + alpha1 * S0S4[0], s0_[1] + alpha1 * S0S4[1])
+        alpha3 = 1.0 * (os3-os0) / (os4-os0)
+        s3_ = (s0_[0] + alpha3 * S0S4[0], s0_[1] + alpha3 * S0S4[1])
+        display("  Expected projection of B on lens: " + repr(s1_), verbose)
+        display("  Expected projection of D on lens: " + repr(s3_), verbose)
+        # Compute actual projections of summits 1 and 3 on lens
+        s1__ = project_on_lens(position, lens, s1)
+        s3__ = project_on_lens(position, lens, s3)
+        display("  Actual projection of B on lens: " + repr(s1__), verbose)
+        display("  Actual projection of D on lens: " + repr(s3__), verbose)
+        # Estimate error:
+        d1 = distance(s1_, s1__)
+        d3 = distance(s3_, s3__)
+        error = d1**2 + d3**2
+        display("    Estimated error: %f (%f + %f)" % (error, d1, d3), verbose)
+        display("    pos: %s (%s)" % (repr(position), error))
+        return error
+    res = minimize(error_to_minimize, init)
+    if (map is not None) and len(path) > 1:
+        for i in range(1, len(path)):
+            map.draw_segment(path[i-1], path[i], color=(255,0,0,0))
+    return (res.x[0], res.x[1])
+
+
 
 
 def simulate_photo(dataset, photographer=None, lens=None):
@@ -199,33 +232,33 @@ class Map:
         """Save map in a jpg file"""
         self.map.save(filename)
 
-    def draw_point(self, (x, y), name=None):
+    def draw_point(self, (x, y), name=None, color=0):
         """Draw a point on the map"""
         y = self.dimension[1] - y
-        self.draw.line((x-5,y, x+5,y), fill=0, width=1)
-        self.draw.line((x,y-5, x,y+5), fill=0, width=1)
+        self.draw.line((x-5,y, x+5,y), fill=color, width=1)
+        self.draw.line((x,y-5, x,y+5), fill=color, width=1)
         if name is not None:
-            self.draw.text((x+5, y+5), name, fill=0)
+            self.draw.text((x+5, y+5), name, fill=color)
         return self
 
-    def draw_segment(self, (x1, y1), (x2, y2)):
+    def draw_segment(self, (x1, y1), (x2, y2), color=0):
         """Draw a segment on the map"""
         y1 = self.dimension[1] - y1
         y2 = self.dimension[1] - y2
-        self.draw.line((x1,y1, x2,y2), fill=0, width=1)
+        self.draw.line((x1,y1, x2,y2), fill=color, width=1)
         return self
 
-    def draw_photographer(self, photographer, lens, text=None):
+    def draw_photographer(self, photographer, lens, color=0, text=None):
         """Draw the photographer and the projections of the summits on the lens"""
         if text is None:
-            text = "photographer"
+            text = "P"
         # Draw projections of summits on lens
         for (summit, name) in zip(self.dataset["q"]["summits"], "ABCDEFGHI"):
             projection = project_on_lens(photographer, lens, summit)
-            self.draw_point(projection, name + "'")
-            self.draw_segment(summit, photographer)
+            self.draw_point(projection, name=name+"'", color=color)
+            self.draw_segment(summit, photographer, color=color)
         # Draw photographer
-        self.draw_point(photographer, text)
+        self.draw_point(photographer, name=text, color=color)
         return self
 
     def check_location(self, (x, y)):
@@ -267,7 +300,10 @@ class Map:
                     errors[x, y] = 0
                 else:
                     w.position = (x, y)
-                    (lens, error) = w.eval_position()
+                    try:
+                        (lens, error) = w.eval_position()
+                    except:
+                        error = 0
                     errors[x, y] = error
                     mini = min(mini, error)
                     maxi = max(maxi, error)
@@ -311,6 +347,9 @@ class Walker:
                             projs[2],
                             projs[4])
         lens = res["lens"]
+        # if photographer on a summit, then lens will end up being on this summit
+        if lens == self.position:
+            raise RuntimeError("Photographer cannot be on a summit!")
         (s0_, s2_, s4_) = res["projections"]
         display("  Estimation of lens position: " + repr(res["lens"]), verbose)
         display("  Estimation of pic position: " + repr(res["picture"]), verbose)
@@ -318,8 +357,7 @@ class Walker:
         display("  Projection of C on lens: " + repr(s2_), verbose)
         display("  Projection of E on lens: " + repr(s4_), verbose)
         # Compute expected projections of summits 1 and 3 on lens
-        S0S4 = (s4_[0]-s0_[0],
-                s4_[1]-s0_[1])
+        S0S4 = (s4_[0]-s0_[0], s4_[1]-s0_[1])
         alpha1 = 1.0 * (projs[1]-projs[0]) / (projs[4]-projs[0])
         s1_ = (s0_[0] + alpha1 * S0S4[0], s0_[1] + alpha1 * S0S4[1])
         alpha3 = 1.0 * (projs[3]-projs[0]) / (projs[4]-projs[0])
@@ -334,7 +372,7 @@ class Walker:
         # Estimate error:
         d1 = distance(s1_, s1__)
         d3 = distance(s3_, s3__)
-        error = d1 + d3
+        error = d1**2 + d3**2
         display("  Estimated error: %f (%f + %f)" % (error, d1, d3), verbose)
         return (lens, error)
 
@@ -363,16 +401,8 @@ def init(i):
     walker = Walker(map)
     return {"dataset": dataset, "map": map, "walker": walker}
 
-def run_tests():
-    print position_lens((0,0),
-                        (100,400), (400,400), (300,100),
-                        -106.06601717798213, 0, 106.06601717798213)
-
 
 if __name__ == "__main__":
-    
-    #run_tests()
-    #sys.exit(-1)
 
     d = Datasets[0]
     map = Map(d)
@@ -388,6 +418,17 @@ if __name__ == "__main__":
     #w.move(100, 100)
     #w.show()
 
-    map.hot_colorize()
-    map.draw_photographer(d['r']['photographer'], d['r']['lens'])
+    #map.hot_colorize()
+    s = d['q']['summits']
+    os = d['q']['projections']
+    estimated_photographer = position_photograper((200, 200), 
+                                                  s[0], s[1], s[2], s[3], s[4], 
+                                                  os[0], os[1], os[2], os[3], os[4],
+                                                  verbose=False,
+                                                  map=map)
+    estimated_lens = position_lens(estimated_photographer,
+                                   s[0], s[2], s[4], 
+                                   os[0], os[2], os[4])["lens"]
+    map.draw_photographer(estimated_photographer, estimated_lens, color=(0, 0, 255, 0), text="P")
+    map.draw_photographer(d['r']['photographer'], d['r']['lens'], text="P'")
     map.show()
