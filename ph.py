@@ -38,6 +38,69 @@ def dot((x1, y1), (x2, y2)):
     return 1.0*x1*x2+y1*y2
 
 
+def barycenter(points):
+    """Compute the barycenter of a list of points (that have the same weight)."""
+    return (sum([p[0] for p in points])/len(points),
+            sum([p[1] for p in points])/len(points))
+
+
+def photographer_area(summits, mapDimension):
+    """Return the list of point that compose the envelop of the area where the photographer can be.
+    summits: list of summits (x, y) as seen from left to right on the picture
+    mapDimension: dimension (x, y) of the map that contains the summits and the photographer
+    """
+    corners = [(0,0), 
+               (0,mapDimension[1]),
+               (mapDimension[0],mapDimension[1]),
+               (mapDimension[0],0)]
+    # Build list of vectors (summits to summits + corners of the map)
+    # Possible points are on the 'right' of these vectors.
+    summit2summit = []
+    for i in range(0, len(summits)):
+        for j in range(i+1, len(summits)):
+            summit2summit.append((summits[i], summits[j]))
+    borders = [(corners[0], corners[1]),
+               (corners[1], corners[2]),
+               (corners[2], corners[3]),
+               (corners[3], corners[0])]
+    vectors = summit2summit + borders
+    # Build list of all intersection points
+    intersections = set()
+    for i in range(0, len(vectors)):
+        for j in range(i, len(vectors)):
+            try:
+                inter = intersection_lines(vectors[i][0],vectors[i][1],
+                                           vectors[j][0],vectors[j][1])
+                intersections.add(inter)
+            except:
+                pass                
+    # Filter our all the points that are not acceptable
+    envelop = []
+    for p in intersections:
+        valid = True
+        for v in vectors:
+            vx = v[1][0]-v[0][0]
+            vy = v[1][1]-v[0][1]
+            px = p[0]-v[0][0]
+            py = p[1]-v[0][1]
+            cross = 1.0*vx*py-vy*px
+            if cross > 0:
+                valid = False
+                break
+        if valid:
+            envelop.append(p)
+    # Compute barycenter
+    bary = barycenter(envelop)
+    # Sort points of the (convex) envelop
+    pabove = [p for p in envelop if p[1]-bary[1] >=0 ]
+    pbelow = [p for p in envelop if p[1]-bary[1] <0 ]
+    pabovesorted = sorted(pabove, 
+                          key=lambda p: -1.0*(p[0]*bary[0]+p[1]*bary[1]) / sqrt((p[0]-bary[0])**2+(p[1]-bary[1])**2))
+    pbelowsorted = sorted(pbelow, 
+                          key=lambda p: 1.0*(p[0]*bary[0]+p[1]*bary[1]) / sqrt((p[0]-bary[0])**2+(p[1]-bary[1])**2))
+    return pabovesorted + pbelowsorted
+
+
 def project_on_lens(photographer, lens, summit):
     """Return the projection of a summit on the lens"""
     aax = lens[0] - photographer[0]
@@ -291,7 +354,7 @@ class Map:
                     newcolor = tuple([max(i-20, 0)
                                       for i in self.map.getpixel((x, y))])
                     self.draw.point((x, y), fill=newcolor)
-        return self.map
+        return self
 
     def hot_colorize(self):
         w = Walker(self)
@@ -328,8 +391,18 @@ class Map:
                     v = percentage_to_color(r*c)
                     y_ = self.dimension[1] - y - 1
                     self.draw.point((x, y_), fill=v)
-        return self.map
-        
+        return self
+
+    def draw_photographer_area(self):
+        envelop = photographer_area(self.dataset["q"]["summits"],
+                                    self.dimension)
+        for i in range(0, len(envelop)):
+            self.draw_segment(envelop[i], envelop[(i+1)%len(envelop)])
+        return self
+
+
+
+
 
 class Walker:
 
@@ -425,16 +498,19 @@ if __name__ == "__main__":
     #w.show()
 
     #map.hot_colorize()
-    s = d['q']['summits']
-    os = d['q']['projections']
-    estimated_photographer = position_photograper((200, 200), 
-                                                  s[0], s[1], s[2], s[3], s[4], 
-                                                  os[0], os[1], os[2], os[3], os[4],
-                                                  verbose=False,
-                                                  map=map)
-    estimated_lens = position_lens(estimated_photographer,
-                                   s[0], s[2], s[4], 
-                                   os[0], os[2], os[4])["lens"]
-    map.draw_photographer(estimated_photographer, estimated_lens, color=(0, 0, 255, 0), text="P")
-    map.draw_photographer(d['r']['photographer'], d['r']['lens'], text="P'")
-    map.show()
+
+    # s = d['q']['summits']
+    # os = d['q']['projections']
+    # estimated_photographer = position_photograper((200, 200), 
+    #                                               s[0], s[1], s[2], s[3], s[4], 
+    #                                               os[0], os[1], os[2], os[3], os[4],
+    #                                               verbose=False,
+    #                                               map=map)
+    # estimated_lens = position_lens(estimated_photographer,
+    #                                s[0], s[2], s[4], 
+    #                                os[0], os[2], os[4])["lens"]
+    # map.draw_photographer(estimated_photographer, estimated_lens, color=(0, 0, 255, 0), text="P")
+    # map.draw_photographer(d['r']['photographer'], d['r']['lens'], text="P'")
+    # map.show()
+
+    map.draw_photographer_area().show()
