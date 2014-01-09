@@ -8,6 +8,7 @@
 from PIL import Image, ImageDraw
 from math import sqrt, fabs
 import numpy as np
+import warnings
 from scipy.optimize import minimize
 import sys
 
@@ -172,7 +173,7 @@ def optimize_lens(p, summits, deltas):
             "projections": (s1_, s2_, s3_)}
 
 
-def evaluate_photographer_postion(position, summits, deltas, verbose=False):
+def evaluate_photographer_position(position, summits, deltas, verbose=False):
     display("Evaluating position: " + repr(position), verbose)
     position = (position[0], position[1])
     # evaluate lens position for the given photographer position
@@ -216,7 +217,8 @@ def optimize_photograper(init, summits, deltas, verbose=False, path=None):
     def error_to_minimize(position):
         if path is not None:
             path.append(position)
-        return evaluate_photographer_postion(position, summits, deltas, verbose)
+        error =  evaluate_photographer_position(position, summits, deltas, verbose)
+        #print "error(%f, %f) = %f" % (position[0], position[1], error)
         return error
     # Minimize error function
     res = minimize(error_to_minimize, init)
@@ -301,8 +303,8 @@ class Map:
         """Draw a point on the map"""
         t = ""
         if name is not None:
-            t = name + " "
-        t += repr((x,y))
+            t = name
+        t += "(%.1f,%.1f)" % (x, y)
         y = self.dimension[1] - y
         self.draw.line((x-5,y, x+5,y), fill=color, width=1)
         self.draw.line((x,y-5, x,y+5), fill=color, width=1)
@@ -376,7 +378,7 @@ class Map:
             for y in range(0, self.dimension[1]):
                 if self.check_location((x, y)):
                     try:
-                        error = evaluate_photographer_postion(
+                        error = evaluate_photographer_position(
                             (x,y),
                             self.summits,
                             self.projections)
@@ -414,8 +416,8 @@ class Map:
     def evaluate_photographer_position(self, photographer=None, verbose=False):
         if photographer is None:
             photographer = self.photographer
-        return evaluate_photographer_postion(photographer,
-                                             self.summit,
+        return evaluate_photographer_position(photographer,
+                                             self.summits,
                                              self.projections,
                                              verbose)
 
@@ -443,44 +445,7 @@ class Map:
         return self
     
 
-
-
-Datasets = [{"q":
-              {"map": (500, 500),
-               "summits": [(100,400),
-                           (200,300), 
-                           (400,400), 
-                           (400,250), 
-                           (300,100)],
-               "projections": [-75*sqrt(2),
-                                -25*sqrt(2),
-                                0,
-                                25*sqrt(2),
-                                75*sqrt(2)]
-               },
-             "r": 
-              {"photographer": (100, 100),
-               "lens": (175, 175)}}
-            ]
-
-
 if __name__ == "__main__":
-
-    #d = Datasets[0]
-    # map = Map(d['q']['map'],
-    #           d['q']['summits'],
-    #           d['q']['projections'])
-    
-    #map.copy().draw_photographer(d['r']['photographer'], d['r']['lens']).show()
-    #map.copy().optimize_photograper().draw_photographer().show()
-
-    #simulate_photo(d['r']['photographer'], d['r']['lens'], d['q']['summits']).show()
-
-    #map.copy().grey_out_impossible_region().show()
-    #map.copy().hot_colorize().show()
-    #map.copy().draw_photographer_area().show()
-
-    #map.copy().optimize_photograper().draw_photographer().draw_photographer_area().show()
 
     import data.brevent as data
     map = Map(data.map, data.summits, data.projections)
@@ -489,11 +454,20 @@ if __name__ == "__main__":
     map.optimize_photograper().draw_photographer()
 
     map.draw_point(data.photographer, "real one")
-    map.show()
+    #map.show()
 
-    print "photographer position: ", map.photographer
+    print "photographer estimated position: ", map.photographer
     d = distance (map.photographer, data.photographer)
     print "distance with real position: ", d
+    print "error at real position: ", map.evaluate_photographer_position(data.photographer)
 
-    map.hot_colorize()
+
+    def test(m, x, y):
+        m.photographer = (x, y)
+        e = m.evaluate_photographer_position()
+        m.draw_point((x, y), "%f"%e)
+        print "(%f, %f) = %f" % (x, y, e)
+
     map.show()
+    #map.hot_colorize()
+    #map.show()
