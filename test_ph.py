@@ -70,9 +70,9 @@ class TestPositionLens(unittest.TestCase):
         pass
 
     def test_basic(self):
-        res = ph.position_lens((0,0),                     # photographer
-                               (-10,10), (0,10), (10,10), # summits
-                               -1, 0, 1)                  # projections
+        res = ph.optimize_lens((0,0),                      # photographer
+                               [(-10,10), (0,10), (10,10)], # summits
+                               [-1, 0, 1])                  # projections
         self.assert_(fabs(res['lens'][0] - 0) < 10**-7)
         self.assert_(fabs(res['lens'][1] - 1) < 10**-7)
         self.assert_(fabs(res['picture'][0] - 0) < 10**-7)
@@ -85,9 +85,9 @@ class TestPositionLens(unittest.TestCase):
         self.assert_(fabs(res['projections'][2][1] - 1) < 10**-7)
 
     def test_diagonal(self):
-        res = ph.position_lens((100,100),                       # photographer
-                               (100,400), (400,400), (300,100), # summits
-                               -75*sqrt(2), 0, 75*sqrt(2))      # projections
+        res = ph.optimize_lens((100,100),                        # photographer
+                               [(100,400), (400,400), (300,100)], # summits
+                               [-75*sqrt(2), 0, 75*sqrt(2)])      # projections
         self.assert_(fabs(res['lens'][0] - 175) < 10**-5)
         self.assert_(fabs(res['lens'][1] - 175) < 10**-5)
         self.assert_(fabs(res['picture'][0] - 175) < 10**-5)
@@ -101,12 +101,42 @@ class TestPositionLens(unittest.TestCase):
 
     def test_error(self):
         # photographer is on a summit!
-        res = ph.position_lens((300, 100),
-                               (100, 400), (400, 400), (300, 100),
-                               -106.06601717798213, 0, 106.06601717798213)
+        res = ph.optimize_lens((300, 100),
+                               [(100, 400), (400, 400), (300, 100)],
+                               [-106.06601717798213, 0, 106.06601717798213])
         self.assert_(fabs(res['lens'][0] - 300) == 0)
         self.assert_(fabs(res['lens'][1] - 100) == 0)
         
+
+class TestBarycenter(unittest.TestCase):
+
+    def setUp(self):
+        pass
+
+    def test_basic(self):
+        self.assertEqual(ph.barycenter([(-1,0), (1,0)]), (0,0))
+        self.assertEqual(ph.barycenter([(-1,0), (1,0), (0,1), (1,0)]), (0,0))
+
+
+class TestPhotographerArea(unittest.TestCase):
+
+    def setUp(self):
+        pass
+
+    def test_basic(self):
+        envelop = ph.photographer_area([(100,400), (200,300), 
+                                        (400,400), (400,250),(300,100)],
+                                       (500, 500))
+        self.assertEqual(envelop,
+                         [(175.0, 287.5), (0.0, 200.0), (0.0, 0.0), 
+                          (233.33333333333331, 0.0), (300.0, 100.0)])
+
+        envelop = ph.photographer_area([(522, 469), (521, 371), (445, 267), (345, 323), (303, 286)],
+                                       (600, 760))
+        self.assertEqual(envelop,
+                         [(524.969387755102, 760.0), (0.0, 760.0), (0.0, 516.2), (345.0, 323.0), (522.1022309389556, 479.0186320176514)])
+
+
 
 if __name__ == '__main__':
     unittest.main()
