@@ -20,9 +20,9 @@ picturefile = "brevent.jpg"
 points = [
     ("Aig du Midi", (13*40+2, 11*40+29), 35.5),
     ("Mt Blanc du Tacul", (13*40+1, 9*40+11), 45.0),
-    #("Mt Maudit", (12*40+3, 8*40+12), 56.3),
+    ("Mt Maudit", (12*40+3, 8*40+12), 56.3),
     ("Mt Blanc", (11*40+5, 6*40+27), 65.8),
-    #("Dome du Gouter", (9*40+21, 7*40+33), 80.4),
+    ("Dome du Gouter", (9*40+21, 7*40+33), 80.4),
     ("Aig du Gouter", (8*40+25, 8*40+3), 92.3),
     ("Aig de Bionnassay", (7*40+23, 7*40+6), 97.2)
     ]

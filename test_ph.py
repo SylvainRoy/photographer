@@ -1,4 +1,4 @@
-#!usr/bin/env python
+#!/usr/bin/env python
 
 import unittest
 import ph
@@ -136,6 +136,18 @@ class TestPhotographerArea(unittest.TestCase):
         self.assertEqual(envelop,
                          [(524.969387755102, 760.0), (0.0, 760.0), (0.0, 516.2), (345.0, 323.0), (522.1022309389556, 479.0186320176514)])
 
+
+class TestSummitsSelection(unittest.TestCase):
+
+    def setUp(self):
+        pass
+
+    def test_basic(self):
+        l  = [1,2,3,4,5,6,7]
+        ll = ph.selections_of_five_summits(l)
+        self.assertEqual(len(ll), 21)
+        self.assertEqual(ll[0], [0,1,2,3,4])
+        self.assertEqual(ll[20], [2,3,4,5,6])
 
 
 if __name__ == '__main__':

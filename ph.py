@@ -8,7 +8,6 @@
 from PIL import Image, ImageDraw
 from math import sqrt, fabs
 import numpy as np
-import warnings
 from scipy.optimize import minimize
 import sys
 
@@ -264,6 +263,18 @@ def percentage_to_color(i):
     return (255-255*i/100, 255-255*i/100, 255, 0)
 
 
+def selections_of_five_summits(summits):
+    out = []
+    ll = len(summits)
+    for i in range(0, ll-4):
+        for j in range(i+1, ll-3):
+            for k in range(j+1, ll-2):
+                for l in range(k+1, ll-1):
+                    for m in range(l+1, ll):
+                        out.append([i,j,k,l,m])
+    return out
+
+
 class Map:
 
     def __init__(self, dimension, summits, projections):
@@ -426,7 +437,7 @@ class Map:
         if init is None:
             # Determine area where the photographer can be
             envelop = photographer_area(self.summits, self.dimension)
-        # Take the middle of the photographer area
+            # Take the middle of the photographer area
             init = barycenter(envelop)
         # Find the best position for the photographer starting from barycenter
         self.path = []
@@ -443,7 +454,37 @@ class Map:
                                    self.projections[2],
                                    self.projections[4]])["lens"]
         return self
+
     
+    def multi_optimize_photograper(self, init=None, verbose=False):
+        """Position the photographer where the picture was taken for all combination of 5 summits."""
+        if init is None:
+            # Determine area where the photographer can be
+            envelop = photographer_area(self.summits, self.dimension)
+            # Take the middle of the photographer area
+            init = barycenter(envelop)
+        combinations = selections_of_five_summits(self.summits)
+        counter = 1
+        for comb in combinations:
+            print "%i/%i" % (counter, len(combinations))
+            counter += 1
+            # Find the best position for the photographer
+            path = []
+            pos = optimize_photograper(
+                init,
+                [data.summits[comb[i]] for i in range(0, 5)],
+                [data.projections[comb[i]] for i in range(0, 5)],
+                verbose,
+                self.path)
+            # Draw photographer
+            self.draw_photographer(pos)
+            # Draw path to photographer
+            for i in range(1, len(self.path)):
+                self.draw_segment(self.path[i-1], self.path[i], color=(255,0,0,0))
+        return self
+
+
+
 
 if __name__ == "__main__":
 
@@ -451,23 +492,13 @@ if __name__ == "__main__":
     map = Map(data.map, data.summits, data.projections)
 
     map.draw_photographer_area()
-    map.optimize_photograper().draw_photographer()
+    map.draw_point(data.photographer, "real")
 
-    map.draw_point(data.photographer, "real one")
-    #map.show()
+    #map.multi_optimize_photograper().show()
 
     print "photographer estimated position: ", map.photographer
-    d = distance (map.photographer, data.photographer)
-    print "distance with real position: ", d
     print "error at real position: ", map.evaluate_photographer_position(data.photographer)
-
-
-    def test(m, x, y):
-        m.photographer = (x, y)
-        e = m.evaluate_photographer_position()
-        m.draw_point((x, y), "%f"%e)
-        print "(%f, %f) = %f" % (x, y, e)
-
     map.show()
+
     #map.hot_colorize()
     #map.show()
