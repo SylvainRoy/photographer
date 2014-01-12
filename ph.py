@@ -379,7 +379,7 @@ class Map:
         return self
 
     def hot_colorize(self):
-        # Compute errors for each pixel of the map
+        """Colorize the map with the error value (it takes time...)."""
         errors = np.array([.0]*(self.dimension[0]*self.dimension[1]))
         errors = errors.reshape(self.dimension[0], self.dimension[1])
         mini, maxi = 99999999999, 0
@@ -417,15 +417,18 @@ class Map:
         return self
 
     def draw_photographer_area(self):
+        """Draw the area where the photographer can be."""
         envelop = self.photographer_area()
         for i in range(0, len(envelop)):
             self.draw_segment(envelop[i], envelop[(i+1)%len(envelop)])
         return self
 
     def photographer_area(self):
+        """Return the area where the photographer can be."""
         return photographer_area(self.summits, self.dimension)
 
     def evaluate_photographer_position(self, photographer=None):
+        """Return the error associated to the photographer position."""
         if photographer is None:
             photographer = self.photographer
         res = optimize_lens(photographer,
