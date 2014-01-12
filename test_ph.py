@@ -31,13 +31,14 @@ class TestIntersectionLines(unittest.TestCase):
         self.assertEqual(ph.intersection_lines((-1.,0.),(1.,0.), (0.,1.),(0.,-1.)), (0.,0.))
 
     def test_errors(self):
-        # lines defined with same points
-        self.assertRaises(RuntimeError, ph.intersection_lines, (1.,1.),(1.,1.), (-1.,-1.),(1.,-1.))
-        self.assertRaises(RuntimeError, ph.intersection_lines, (2.,1.),(1.,1.), (-1.,-1.),(-1.,-1.))
+        # (wrong) line defined with same points
+        self.assertEqual(ph.intersection_lines((1.,1.),(1.,1.), (-1.,-1.),(1.,-1.)), None)
+        self.assertEqual(ph.intersection_lines((2.,1.),(1.,1.), (-1.,-1.),(-1.,-1.)), None)
+        self.assertEqual(ph.intersection_lines((-1.,-1.),(-1.,-1.), (-1.,-1.),(-1.,-1.)), None)
         # Same lines
-        self.assertRaises(RuntimeError, ph.intersection_lines, (2.,1.),(1.,1.), (2.,1.),(1.,1.))
+        self.assertEqual(ph.intersection_lines((2.,1.),(1.,1.), (2.,1.),(1.,1.)), None)
         # // lines
-        self.assertRaises(RuntimeError, ph.intersection_lines, (-1.,1.),(1.,1.), (-1.,-1.),(1.,-1.))
+        self.assertEqual(ph.intersection_lines((-1.,1.),(1.,1.), (-1.,-1.),(1.,-1.)), None)
         
 
 class TestDot(unittest.TestCase):
@@ -70,7 +71,7 @@ class TestPositionLens(unittest.TestCase):
         pass
 
     def test_basic(self):
-        res = ph.optimize_lens((0,0),                      # photographer
+        res = ph.optimize_lens((0,0),                       # photographer
                                [(-10,10), (0,10), (10,10)], # summits
                                [-1, 0, 1])                  # projections
         self.assert_(fabs(res['lens'][0] - 0) < 10**-7)
@@ -85,19 +86,19 @@ class TestPositionLens(unittest.TestCase):
         self.assert_(fabs(res['projections'][2][1] - 1) < 10**-7)
 
     def test_diagonal(self):
-        res = ph.optimize_lens((100,100),                        # photographer
+        res = ph.optimize_lens((100,100),                         # photographer
                                [(100,400), (400,400), (300,100)], # summits
                                [-75*sqrt(2), 0, 75*sqrt(2)])      # projections
-        self.assert_(fabs(res['lens'][0] - 175) < 10**-5)
-        self.assert_(fabs(res['lens'][1] - 175) < 10**-5)
-        self.assert_(fabs(res['picture'][0] - 175) < 10**-5)
-        self.assert_(fabs(res['picture'][1] - 175) < 10**-5)
-        self.assert_(fabs(res['projections'][0][0] - 100) < 10**-5)
+        self.assert_(fabs(res['lens'][0] - 175) < 10**-6)
+        self.assert_(fabs(res['lens'][1] - 175) < 10**-6)
+        self.assert_(fabs(res['picture'][0] - 175) < 10**-6)
+        self.assert_(fabs(res['picture'][1] - 175) < 10**-6)
+        self.assert_(fabs(res['projections'][0][0] - 100) < 10**-6)
         self.assert_(fabs(res['projections'][0][1] - 250) < 10**-5)
-        self.assert_(fabs(res['projections'][1][0] - 175) < 10**-5)
-        self.assert_(fabs(res['projections'][1][1] - 175) < 10**-5)
-        self.assert_(fabs(res['projections'][2][0] - 250) < 10**-5)
-        self.assert_(fabs(res['projections'][2][1] - 100) < 10**-5)
+        self.assert_(fabs(res['projections'][1][0] - 175) < 10**-6)
+        self.assert_(fabs(res['projections'][1][1] - 175) < 10**-6)
+        self.assert_(fabs(res['projections'][2][0] - 250) < 10**-6)
+        self.assert_(fabs(res['projections'][2][1] - 100) < 10**-6)
 
     def test_error(self):
         # photographer is on a summit!
@@ -115,7 +116,7 @@ class TestBarycenter(unittest.TestCase):
 
     def test_basic(self):
         self.assertEqual(ph.barycenter([(-1,0), (1,0)]), (0,0))
-        self.assertEqual(ph.barycenter([(-1,0), (1,0), (0,1), (1,0)]), (0,0))
+        self.assertEqual(ph.barycenter([(-1,0), (1,0), (0,1), (0,-1)]), (0,0))
 
 
 class TestPhotographerArea(unittest.TestCase):
