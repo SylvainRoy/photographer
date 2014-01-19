@@ -170,7 +170,7 @@ def optimize_lens(p, summits, projections):
         # Compute the sum of the errors
         error = 0
         for i in range(0, len(distances)):
-            error += (fabs(distances[i] - deltas[i]))**2
+            error += (distances[i] - deltas[i])**2
         #print "alpha(%.15f, %.15f) = %.15f" % (alpha[0], alpha[1], error)
         return error
     # find the values of alpha that minimise the distances between expected
