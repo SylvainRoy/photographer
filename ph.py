@@ -1,34 +1,37 @@
 #!/usr/bin/env python
 
+"""
+Retrieve the position of a photographer on a map based on the coordinates of points from the picture.
+"""
+
 # todo:
 #  - optimize mimimization (e.g. x^3)
 #  - better handling of situation where the optimization get out of the acceptable zone
 #  - real picture!!!
 
+import sys
+import numpy as np
 
 from PIL import Image, ImageDraw
 from math import sqrt, fabs
-import numpy as np
 from scipy.optimize import minimize
-import sys
 
 
 def intersection_lines(a1, a2, b1, b2):
     """
     Return the intersection of two lines defined by points, None if the lines are parallel.
     """
-    den = 1.0*(b2[1]-b1[1])*(a2[0]-a1[0])-(b2[0]-b1[0])*(a2[1]-a1[1])
+    den = (b2[1] - b1[1]) * (a2[0] - a1[0]) - (b2[0] - b1[0]) * (a2[1] - a1[1])
     if den == 0:
         return None
-    num = 1.0*(b2[0]-b1[0])*(a1[1]-b1[1])-(b2[1]-b1[1])*(a1[0]-b1[0])
+    num = (b2[0] - b1[0]) * (a1[1] - b1[1]) - (b2[1] - b1[1]) * (a1[0] - b1[0])
     ua = num / den
-    return (a1[0]+ua*(a2[0]-a1[0]), a1[1]+ua*(a2[1]-a1[1]))
-
+    return (a1[0] + ua * (a2[0] - a1[0]), a1[1] + ua * (a2[1] - a1[1]))
 
 
 def distance(a, b):
     """Return the distance between two points."""
-    return sqrt((b[0] - a[0])**2 + (b[1] - a[1])**2)
+    return sqrt((b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2)
 
 
 def dot(u, v):
@@ -39,10 +42,12 @@ def dot(u, v):
 def barycenter(points, weights=None):
     """Compute the barycenter of a list of points (that have the same weight)."""
     if weights is None:
-        weights = [1.]*len(points)
+        weights = [1] * len(points)
     sumWeights = sum(weights)
-    return (sum([p[0]*w for (p,w) in zip(points, weights)])/sumWeights,
-            sum([p[1]*w for (p,w) in zip(points, weights)])/sumWeights)
+    return (
+        sum([p[0] * w for (p, w) in zip(points, weights)]) / sumWeights,
+        sum([p[1] * w for (p, w) in zip(points, weights)]) / sumWeights,
+    )
 
 
 def photographer_area(summits, mapDimension):
@@ -51,27 +56,32 @@ def photographer_area(summits, mapDimension):
     summits: list of summits (x, y) as seen from left to right on the picture
     mapDimension: dimension (x, y) of the map that contains the summits and the photographer
     """
-    corners = [(0, 0), 
-               (0, mapDimension[1]),
-               (mapDimension[0], mapDimension[1]),
-               (mapDimension[0], 0)]
+    corners = [
+        (0, 0),
+        (0, mapDimension[1]),
+        (mapDimension[0], mapDimension[1]),
+        (mapDimension[0], 0),
+    ]
     # Build list of vectors (summits to summits + corners of the map)
     # Possible points are on the 'right' of these vectors.
     summit2summit = []
     for i in range(0, len(summits)):
-        for j in range(i+1, len(summits)):
+        for j in range(i + 1, len(summits)):
             summit2summit.append((summits[i], summits[j]))
-    borders = [(corners[0], corners[1]),
-               (corners[1], corners[2]),
-               (corners[2], corners[3]),
-               (corners[3], corners[0])]
+    borders = [
+        (corners[0], corners[1]),
+        (corners[1], corners[2]),
+        (corners[2], corners[3]),
+        (corners[3], corners[0]),
+    ]
     vectors = summit2summit + borders
     # Build list of all intersection points
     intersections = set()
     for i in range(0, len(vectors)):
         for j in range(i, len(vectors)):
-            inter = intersection_lines(vectors[i][0], vectors[i][1],
-                                       vectors[j][0], vectors[j][1])
+            inter = intersection_lines(
+                vectors[i][0], vectors[i][1], vectors[j][0], vectors[j][1]
+            )
             if inter is not None:
                 intersections.add(inter)
     # Filter out all the points that are not acceptable
@@ -80,12 +90,12 @@ def photographer_area(summits, mapDimension):
     for p in intersections:
         valid = True
         for v in vectors:
-            vx = v[1][0]-v[0][0]
-            vy = v[1][1]-v[0][1]
-            px = p[0]-v[0][0]
-            py = p[1]-v[0][1]
-            cross = 1.0*vx*py-vy*px
-            if cross > 1e-10: # the wonderful world of numerical computation...
+            vx = v[1][0] - v[0][0]
+            vy = v[1][1] - v[0][1]
+            px = p[0] - v[0][0]
+            py = p[1] - v[0][1]
+            cross = 1.0 * vx * py - vy * px
+            if cross > 1e-10:  # the wonderful world of numerical computation...
                 valid = False
                 break
         if valid:
@@ -93,12 +103,18 @@ def photographer_area(summits, mapDimension):
     # Compute barycenter of envelop
     bary = barycenter(envelop)
     # Sort points (trigo order) of the (convex) envelop
-    pabove = [p for p in envelop if p[1]-bary[1] >=0 ]
-    pbelow = [p for p in envelop if p[1]-bary[1] <0 ]
-    pabovesorted = sorted(pabove, 
-                          key=lambda p: -1.0*(p[0]-bary[0]) / sqrt((p[0]-bary[0])**2+(p[1]-bary[1])**2))
-    pbelowsorted = sorted(pbelow, 
-                          key=lambda p: 1.0*(p[0]-bary[0]) / sqrt((p[0]-bary[0])**2+(p[1]-bary[1])**2))
+    pabove = [p for p in envelop if p[1] - bary[1] >= 0]
+    pbelow = [p for p in envelop if p[1] - bary[1] < 0]
+    pabovesorted = sorted(
+        pabove,
+        key=lambda p: -(p[0] - bary[0])
+        / sqrt((p[0] - bary[0]) ** 2 + (p[1] - bary[1]) ** 2),
+    )
+    pbelowsorted = sorted(
+        pbelow,
+        key=lambda p: (p[0] - bary[0])
+        / sqrt((p[0] - bary[0]) ** 2 + (p[1] - bary[1]) ** 2),
+    )
     return pabovesorted + pbelowsorted
 
 
@@ -109,14 +125,16 @@ def project_on_lens(photographer, lens, summit):
     """
     aax = lens[0] - photographer[0]
     aay = lens[1] - photographer[1]
-    aac = lens[0]*(photographer[0]-lens[0]) + lens[1]*(photographer[1]-lens[1])
+    aac = lens[0] * (photographer[0] - lens[0]) + lens[1] * (photographer[1] - lens[1])
     bbx = summit[1] - photographer[1]
     bby = photographer[0] - summit[0]
-    bbc = photographer[0]*(photographer[1]-summit[1]) + photographer[1]*(summit[0]-photographer[0])
-    denominator = aax*(bby*aac-aay*bbc) + aay*(aax*bbc-bbx*aac)
-    mx = - aac*(bby*aac-aay*bbc) / denominator
-    my = - aac*(aax*bbc-bbx*aac) / denominator
-    return (mx,my)
+    bbc = photographer[0] * (photographer[1] - summit[1]) + photographer[1] * (
+        summit[0] - photographer[0]
+    )
+    denominator = aax * (bby * aac - aay * bbc) + aay * (aax * bbc - bbx * aac)
+    mx = -aac * (bby * aac - aay * bbc) / denominator
+    my = -aac * (aax * bbc - bbx * aac) / denominator
+    return (mx, my)
 
 
 def position_lens(p, summits, alpha):
@@ -130,19 +148,27 @@ def position_lens(p, summits, alpha):
     s1, s2toN, sM = summits[0], summits[1:-1], summits[-1]
     if alpha[0] == 0:
         s1_ = p
-        sM_ = ((1-alpha[1])*p[0]+alpha[1]*sM[0],
-               (1-alpha[1])*p[1]+alpha[1]*sM[1])
+        sM_ = (
+            (1 - alpha[1]) * p[0] + alpha[1] * sM[0],
+            (1 - alpha[1]) * p[1] + alpha[1] * sM[1],
+        )
         s2toN_ = [p for x in s2toN]
     elif alpha[1] == 0:
-        s1_ = ((1-alpha[0])*p[0]+alpha[0]*s1[0],
-               (1-alpha[0])*p[1]+alpha[0]*s1[1])
+        s1_ = (
+            (1 - alpha[0]) * p[0] + alpha[0] * s1[0],
+            (1 - alpha[0]) * p[1] + alpha[0] * s1[1],
+        )
         sM_ = p
         s2toN_ = [p for x in s2toN]
     else:
-        s1_ = ((1-alpha[0])*p[0]+alpha[0]*s1[0],
-               (1-alpha[0])*p[1]+alpha[0]*s1[1])
-        sM_ = ((1-alpha[1])*p[0]+alpha[1]*sM[0],
-               (1-alpha[1])*p[1]+alpha[1]*sM[1])
+        s1_ = (
+            (1 - alpha[0]) * p[0] + alpha[0] * s1[0],
+            (1 - alpha[0]) * p[1] + alpha[0] * s1[1],
+        )
+        sM_ = (
+            (1 - alpha[1]) * p[0] + alpha[1] * sM[0],
+            (1 - alpha[1]) * p[1] + alpha[1] * sM[1],
+        )
         s2toN_ = [intersection_lines(s1_, sM_, p, x) for x in s2toN]
     # Build list of projection points
     s_ = [s1_] + s2toN_ + [sM_]
@@ -161,41 +187,41 @@ def optimize_lens(p, summits, projections):
     p1, pM = projections[0], projections[-1]
     deltas = []
     for i in range(1, len(projections)):
-        deltas.append(fabs(projections[i] - projections[i-1]))
+        deltas.append(fabs(projections[i] - projections[i - 1]))
+
     def error_to_minimize(alpha):
         # Positions lens based on alpha
         s_ = position_lens(p, summits, alpha)
         # Compute the distances of the projections of the summits on lens
         distances = []
         for i in range(1, len(s_)):
-            distances.append(distance(s_[i-1], s_[i]))
+            distances.append(distance(s_[i - 1], s_[i]))
         # Compute the sum of the errors
         error = 0
         for i in range(0, len(distances)):
-            error += (distances[i] - deltas[i])**2
-        #print "alpha(%.15f, %.15f) = %.15f" % (alpha[0], alpha[1], error)
+            error += (distances[i] - deltas[i]) ** 2
+        # print "alpha(%.15f, %.15f) = %.15f" % (alpha[0], alpha[1], error)
         return error
+
     # find the values of alpha that minimise the distances between expected
     # and actual projections of the summits on the lens.
-    res = minimize(error_to_minimize, [.5,.5],
-                   method='L-BFGS-B',
-                   bounds=((0, 1), (0, 1)))
+    res = minimize(
+        error_to_minimize, [0.5, 0.5], method="L-BFGS-B", bounds=((0, 1), (0, 1))
+    )
     alpha = res.x
     # (re)compute the position of the summits' projection on the lens
     s_ = position_lens(p, summits, alpha)
     # Compute position of center of picture
-    f = 1.0*p1/(pM-p1)
-    m = (s_[0][0] - f*(s_[-1][0]-s_[0][0]),
-         s_[0][1] - f*(s_[-1][1]-s_[0][1]))
+    f = 1.0 * p1 / (pM - p1)
+    m = (s_[0][0] - f * (s_[-1][0] - s_[0][0]), s_[0][1] - f * (s_[-1][1] - s_[0][1]))
     # Compute position of lens ("in front of" photographer)
-    den = (s_[-1][0]-s_[0][0])**2 + (s_[-1][1]-s_[0][1])**2
-    r = ((p[0]-s_[0][0])*(s_[-1][0]-s_[0][0])+(p[1]-s_[0][1])*(s_[-1][1]-s_[0][1])) / den
-    o = (s_[0][0] + r*(s_[-1][0]-s_[0][0]),
-         s_[0][1] + r*(s_[-1][1]-s_[0][1]))
-    return {"lens": o,
-            "picture": m,
-            "projections": s_,
-            "error": res.fun}
+    den = (s_[-1][0] - s_[0][0]) ** 2 + (s_[-1][1] - s_[0][1]) ** 2
+    r = (
+        (p[0] - s_[0][0]) * (s_[-1][0] - s_[0][0])
+        + (p[1] - s_[0][1]) * (s_[-1][1] - s_[0][1])
+    ) / den
+    o = (s_[0][0] + r * (s_[-1][0] - s_[0][0]), s_[0][1] + r * (s_[-1][1] - s_[0][1]))
+    return {"lens": o, "picture": m, "projections": s_, "error": res.fun}
 
 
 def optimize_photograper(init, summits, projections, mapDimension, path=None):
@@ -204,45 +230,60 @@ def optimize_photograper(init, summits, projections, mapDimension, path=None):
     def error_to_minimize(position):
         if path is not None:
             path.append(position)
-        res =  optimize_lens(position, summits, projections)
-        #print "eval(%f, %f) = %f" % (position[0], position[1], res['error'])
-        return res['error']
+        res = optimize_lens(position, summits, projections)
+        # print "eval(%f, %f) = %f" % (position[0], position[1], res['error'])
+        return res["error"]
+
     # Minimize error function
-    res = minimize(error_to_minimize,
-                   init,
-                   method='L-BFGS-B',
-                   bounds=((0, mapDimension[0]), (0, mapDimension[1])))
-    return {"photographer": res.x,
-            "error": res.fun}
+    res = minimize(
+        error_to_minimize,
+        init,
+        method="L-BFGS-B",
+        bounds=((0, mapDimension[0]), (0, mapDimension[1])),
+    )
+    return {"photographer": res.x, "error": res.fun}
 
 
 def simulate_photo(photographer, lens, summits):
-    """Return an image simulating the photo""" 
+    """Return an image simulating the photo"""
     # Get key values
     photox, photoy, middlex = 501, 200, 251
     (xp, yp) = photographer
     (xo, yo) = lens
-    h = sqrt((xo-xp)**2+(yo-yp)**2)
+    h = sqrt((xo - xp) ** 2 + (yo - yp) ** 2)
     # Compute summits' positions relative to center of photo
     deltas = []
     for summit in summits:
         (xm, ym) = project_on_lens(photographer, lens, summit)
-        delta = ((yo-yp)*(xm-xo)-(xo-xp)*(ym-yo)) / h
+        delta = ((yo - yp) * (xm - xo) - (xo - xp) * (ym - yo)) / h
         deltas.append(delta)
     # compute coef to get everything to fit in picture
-    alpha = (photox - 100)  / (max(deltas) - min(deltas))
+    alpha = (photox - 100) / (max(deltas) - min(deltas))
     # Build photo
-    photo = Image.new('RGBA', (photox, photoy), (255, 255, 255, 0))
+    photo = Image.new("RGBA", (photox, photoy), (255, 255, 255, 0))
     draw = ImageDraw.Draw(photo)
     for (delta, name) in zip(deltas, "ABCDEFGHIKLMNOPQRSTUVWXYZ"):
-        draw.line((middlex+alpha*delta, photoy/2,
-                   middlex+alpha*delta+photox/10, photoy), fill=0)
-        draw.line((middlex+alpha*delta, photoy/2,
-                   middlex+alpha*delta-photox/10, photoy), fill=0)
-        draw.text((middlex+alpha*delta+5, photoy/2-10), name, fill=0)
-    draw.line((middlex,0,
-               middlex,photoy), fill=0)
-    draw.text((middlex+10, 10), "center", fill=0)
+        draw.line(
+            (
+                middlex + alpha * delta,
+                photoy / 2,
+                middlex + alpha * delta + photox / 10,
+                photoy,
+            ),
+            fill=0,
+        )
+        draw.line(
+            (
+                middlex + alpha * delta,
+                photoy / 2,
+                middlex + alpha * delta - photox / 10,
+                photoy,
+            ),
+            fill=0,
+        )
+        draw.text((middlex + alpha * delta + 5, photoy / 2 - 10), name, fill=0)
+    draw.line((middlex, 0, middlex, photoy), fill=0)
+    draw.text((middlex + 10, 10), "center", fill=0)
     return photo
 
 
@@ -258,30 +299,29 @@ def percentage_to_color(i):
 def selections_of_five_summits(summits):
     out = []
     ll = len(summits)
-    for i in range(0, ll-4):
-        for j in range(i+1, ll-3):
-            for k in range(j+1, ll-2):
-                for l in range(k+1, ll-1):
-                    for m in range(l+1, ll):
-                        out.append([i,j,k,l,m])
+    for i in range(0, ll - 4):
+        for j in range(i + 1, ll - 3):
+            for k in range(j + 1, ll - 2):
+                for l in range(k + 1, ll - 1):
+                    for m in range(l + 1, ll):
+                        out.append([i, j, k, l, m])
     return out
 
 
 class Map:
-
     def __init__(self, dimension, summits, projections):
         self.summits = summits
         self.dimension = dimension
         self.projections = projections
         # Build map
-        self.map = Image.new('RGB', self.dimension, (255, 255, 255, 0))
+        self.map = Image.new("RGB", self.dimension, (255, 255, 255, 0))
         self.draw = ImageDraw.Draw(self.map)
         # Draw summits
         for (summit, name) in zip(self.summits, "ABCDEFGHIKLMNOPQRSTUVWXYZ"):
             self.draw_point(summit, name)
         # Position of photographer and lens
         self.path = None
-        self.photographer = (self.dimension[0]/2, self.dimension[1]/2)
+        self.photographer = (self.dimension[0] / 2, self.dimension[1] / 2)
         self.lens = None
 
     def copy(self):
@@ -306,16 +346,18 @@ class Map:
         """Draw a point on the map"""
         (x, y) = point
         y = self.dimension[1] - y
-        self.draw.line((x-5, y, x+5, y), fill=color, width=1)
-        self.draw.line((x,y-5, x, y+5), fill=color, width=1)
-        self.draw.text((x+5, y+5), name, fill=color)
+        self.draw.line((x - 5, y, x + 5, y), fill=color, width=1)
+        self.draw.line((x, y - 5, x, y + 5), fill=color, width=1)
+        self.draw.text((x + 5, y + 5), name, fill=color)
         return self
 
     def draw_segment(self, p1, p2, color=0):
         """Draw a segment on the map"""
-        self.draw.line((p1[0], self.dimension[1] - p1[1],
-                        p2[0], self.dimension[1] - p2[1]),
-                       fill=color, width=1)
+        self.draw.line(
+            (p1[0], self.dimension[1] - p1[1], p2[0], self.dimension[1] - p2[1]),
+            fill=color,
+            width=1,
+        )
         return self
 
     def draw_photographer(self, photographer=None, lens=None, color=0, text=None):
@@ -333,7 +375,7 @@ class Map:
             path = self.path
         if path is not None and len(path) > 1:
             for i in range(1, len(path)):
-                self.draw_segment(path[i-1], path[i], color=(255,0,0,0))
+                self.draw_segment(path[i - 1], path[i], color=(255, 0, 0, 0))
         return self
 
     def draw_lens(self, lens=None, color=0):
@@ -343,10 +385,9 @@ class Map:
         if lens is not None:
             for (summit, name) in zip(self.summits, "ABCDEFGHIKLMNOPQRSTUVWXYZ"):
                 projection = project_on_lens(self.photographer, lens, summit)
-                self.draw_point(projection, name=name+"'", color=color)
+                self.draw_point(projection, name=name + "'", color=color)
                 self.draw_segment(summit, self.photographer, color=color)
         return self
-
 
     def check_location(self, point):
         """
@@ -356,10 +397,10 @@ class Map:
         (x, y) = point
         l = len(self.summits)
         for i in range(0, l):
-            for j in range(i+1, l):
+            for j in range(i + 1, l):
                 (xi, yi) = self.summits[i]
                 (xj, yj) = self.summits[j]
-                cross = (xj-x)*(yi-y) - (yj-y)*(xi-x)
+                cross = (xj - x) * (yi - y) - (yj - y) * (xi - x)
                 if cross < 0:
                     return False
         return True
@@ -373,25 +414,24 @@ class Map:
             for y in range(0, self.dimension[1]):
                 if not self.check_location((x, y)):
                     y = self.dimension[1] - y - 1
-                    newcolor = tuple([max(i-20, 0)
-                                      for i in self.map.getpixel((x, y))])
+                    newcolor = tuple(
+                        [max(i - 20, 0) for i in self.map.getpixel((x, y))]
+                    )
                     self.draw.point((x, y), fill=newcolor)
         return self
 
     def hot_colorize(self):
         """Colorize the map with the error value (it takes time...)."""
-        errors = np.array([.0]*(self.dimension[0]*self.dimension[1]))
+        errors = np.array([0.0] * (self.dimension[0] * self.dimension[1]))
         errors = errors.reshape(self.dimension[0], self.dimension[1])
         mini, maxi = 99999999999, 0
-        i, percentage, onepercent = 0, 0, self.dimension[0]*self.dimension[1]/100
+        i, percentage, onepercent = 0, 0, self.dimension[0] * self.dimension[1] / 100
         for x in range(0, self.dimension[0]):
             for y in range(0, self.dimension[1]):
                 if self.check_location((x, y)):
                     try:
-                        error = optimize_lens((x,y),
-                                              self.summits,
-                                              self.projections)
-                        error = error['error']
+                        error = optimize_lens((x, y), self.summits, self.projections)
+                        error = error["error"]
                     except:
                         error = 0
                     errors[x, y] = error
@@ -411,7 +451,7 @@ class Map:
             for y in range(0, self.dimension[1]):
                 c = errors[x, y]
                 if c != 0:
-                    v = percentage_to_color(r*c)
+                    v = percentage_to_color(r * c)
                     y_ = self.dimension[1] - y - 1
                     self.draw.point((x, y_), fill=v)
         return self
@@ -420,7 +460,7 @@ class Map:
         """Draw the area where the photographer can be."""
         envelop = self.photographer_area()
         for i in range(0, len(envelop)):
-            self.draw_segment(envelop[i], envelop[(i+1)%len(envelop)])
+            self.draw_segment(envelop[i], envelop[(i + 1) % len(envelop)])
         return self
 
     def photographer_area(self):
@@ -431,12 +471,12 @@ class Map:
         """Return the error associated to the photographer position."""
         if photographer is None:
             photographer = self.photographer
-        res = optimize_lens(photographer,
-                            self.summits,
-                            self.projections)
-        return res['error']
+        res = optimize_lens(photographer, self.summits, self.projections)
+        return res["error"]
 
-    def optimize_photograper(self, init=None, summits=None, projections=None, draw=False, drawPath=False):
+    def optimize_photograper(
+        self, init=None, summits=None, projections=None, draw=False, drawPath=False
+    ):
         """Position the photographer where the picture was taken."""
         if summits is None:
             summits = self.summits
@@ -448,20 +488,22 @@ class Map:
             init = barycenter(envelop)
         # Find the best position for the photographer starting from barycenter
         self.path = []
-        res = optimize_photograper(init=init, 
-                                   summits=summits,
-                                   projections=projections,
-                                   mapDimension=self.dimension,
-                                   path=self.path)
-        self.photographer = res['photographer']
-        error = res['error']
+        res = optimize_photograper(
+            init=init,
+            summits=summits,
+            projections=projections,
+            mapDimension=self.dimension,
+            path=self.path,
+        )
+        self.photographer = res["photographer"]
+        error = res["error"]
         # Draw photographer and path of the search
         if draw:
             self.draw_photographer(text="%.8f" % error)
         if drawPath:
             self.draw_search_path()
         return res
-    
+
     def multi_optimize_photograper(self, init=None, draw=False, drawPath=False):
         """
         Position the photographer where the picture was taken for all combinations of 5 summits.
@@ -480,34 +522,38 @@ class Map:
                 summits=[data.summits[comb[i]] for i in range(0, 5)],
                 projections=[data.projections[comb[i]] for i in range(0, 5)],
                 draw=False,
-                drawPath=False)
-            res['summits_used'] = comb
+                drawPath=False,
+            )
+            res["summits_used"] = comb
             positions.append(res)
         sortedPositions = sorted(positions, key=lambda p: p["error"])
         if drawPath:
             self.draw_search_path()
         if draw:
             for (p, t) in zip(sortedPositions, "ABCDEFGHIJKLMNOPQRSTUVWXYZ"):
-                self.draw_photographer(p["photographer"], text=t+"(%f)" % (1./p["error"]))
-            bary = barycenter([i['photographer'] for i in sortedPositions],
-                              [1./i['error'] for i in sortedPositions])
+                self.draw_photographer(
+                    p["photographer"], text=t + "(%f)" % (1.0 / p["error"])
+                )
+            bary = barycenter(
+                [i["photographer"] for i in sortedPositions],
+                [1.0 / i["error"] for i in sortedPositions],
+            )
             print("bary: ", bary)
             self.draw_photographer(bary, text="Bary")
         return sortedPositions
 
 
-
-
 if __name__ == "__main__":
 
     import data.brevent as data
+
     map = Map(data.map, data.summits, data.projections)
 
     map.hot_colorize()
     map.draw_photographer_area()
     map.draw_point(data.photographer, "R")
 
-    #map.multi_optimize_photograper(draw=True, drawPath=False)
+    # map.multi_optimize_photograper(draw=True, drawPath=False)
     map.optimize_photograper(draw=True, drawPath=True)
 
     map.save("brevent-solved.jpg")
