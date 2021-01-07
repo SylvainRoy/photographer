@@ -13,25 +13,27 @@ from scipy.optimize import minimize
 import sys
 
 
-
-def intersection_lines((x1, y1),(x2, y2), (x3, y3),(x4, y4)):
-    """Return the intersection of two lines defined by points."""
-    den = 1.0*(y4-y3)*(x2-x1)-(x4-x3)*(y2-y1)
+def intersection_lines(a1, a2, b1, b2):
+    """
+    Return the intersection of two lines defined by points, None if the lines are parallel.
+    """
+    den = 1.0*(b2[1]-b1[1])*(a2[0]-a1[0])-(b2[0]-b1[0])*(a2[1]-a1[1])
     if den == 0:
         return None
-    num = 1.0*(x4-x3)*(y1-y3)-(y4-y3)*(x1-x3)
+    num = 1.0*(b2[0]-b1[0])*(a1[1]-b1[1])-(b2[1]-b1[1])*(a1[0]-b1[0])
     ua = num / den
-    return (x1+ua*(x2-x1), y1+ua*(y2-y1))
+    return (a1[0]+ua*(a2[0]-a1[0]), a1[1]+ua*(a2[1]-a1[1]))
 
 
-def distance((x1, y1), (x2, y2)):
+
+def distance(a, b):
     """Return the distance between two points."""
-    return sqrt((x2-x1)**2+(y2-y1)**2)
+    return sqrt((b[0] - a[0])**2 + (b[1] - a[1])**2)
 
 
-def dot((x1, y1), (x2, y2)):
+def dot(u, v):
     """Return the dot product of two vectors."""
-    return 1.0*x1*x2+y1*y2
+    return u[0] * v[0] + u[1] * v[1]
 
 
 def barycenter(points, weights=None):
@@ -49,10 +51,10 @@ def photographer_area(summits, mapDimension):
     summits: list of summits (x, y) as seen from left to right on the picture
     mapDimension: dimension (x, y) of the map that contains the summits and the photographer
     """
-    corners = [(0,0), 
-               (0,mapDimension[1]),
-               (mapDimension[0],mapDimension[1]),
-               (mapDimension[0],0)]
+    corners = [(0, 0), 
+               (0, mapDimension[1]),
+               (mapDimension[0], mapDimension[1]),
+               (mapDimension[0], 0)]
     # Build list of vectors (summits to summits + corners of the map)
     # Possible points are on the 'right' of these vectors.
     summit2summit = []
@@ -68,8 +70,8 @@ def photographer_area(summits, mapDimension):
     intersections = set()
     for i in range(0, len(vectors)):
         for j in range(i, len(vectors)):
-            inter = intersection_lines(vectors[i][0],vectors[i][1],
-                                       vectors[j][0],vectors[j][1])
+            inter = intersection_lines(vectors[i][0], vectors[i][1],
+                                       vectors[j][0], vectors[j][1])
             if inter is not None:
                 intersections.add(inter)
     # Filter out all the points that are not acceptable
@@ -141,7 +143,7 @@ def position_lens(p, summits, alpha):
                (1-alpha[0])*p[1]+alpha[0]*s1[1])
         sM_ = ((1-alpha[1])*p[0]+alpha[1]*sM[0],
                (1-alpha[1])*p[1]+alpha[1]*sM[1])
-        s2toN_ = [intersection_lines(s1_,sM_, p,x) for x in s2toN]
+        s2toN_ = [intersection_lines(s1_, sM_, p, x) for x in s2toN]
     # Build list of projection points
     s_ = [s1_] + s2toN_ + [sM_]
     return s_
@@ -250,7 +252,7 @@ def percentage_to_color(i):
         i = int(i)
     except:
         i = 0
-    return (255-255*i/100, 255-255*i/100, 255, 0)
+    return (255 - 255 * i // 100, 255 - 255 * i // 100, 255, 0)
 
 
 def selections_of_five_summits(summits):
@@ -272,7 +274,7 @@ class Map:
         self.dimension = dimension
         self.projections = projections
         # Build map
-        self.map = Image.new('RGBA', self.dimension, (255, 255, 255, 0))
+        self.map = Image.new('RGB', self.dimension, (255, 255, 255, 0))
         self.draw = ImageDraw.Draw(self.map)
         # Draw summits
         for (summit, name) in zip(self.summits, "ABCDEFGHIKLMNOPQRSTUVWXYZ"):
@@ -300,23 +302,20 @@ class Map:
         """Save map in a jpg file"""
         self.map.save(filename)
 
-    def draw_point(self, (x, y), name=None, color=0):
+    def draw_point(self, point, name="", color=0):
         """Draw a point on the map"""
-        t = ""
-        if name is not None:
-            t = name
-        #t += "(%.1f,%.1f)" % (x, y)
+        (x, y) = point
         y = self.dimension[1] - y
-        self.draw.line((x-5,y, x+5,y), fill=color, width=1)
-        self.draw.line((x,y-5, x,y+5), fill=color, width=1)
-        self.draw.text((x+5, y+5), t, fill=color)
+        self.draw.line((x-5, y, x+5, y), fill=color, width=1)
+        self.draw.line((x,y-5, x, y+5), fill=color, width=1)
+        self.draw.text((x+5, y+5), name, fill=color)
         return self
 
-    def draw_segment(self, (x1, y1), (x2, y2), color=0):
+    def draw_segment(self, p1, p2, color=0):
         """Draw a segment on the map"""
-        y1 = self.dimension[1] - y1
-        y2 = self.dimension[1] - y2
-        self.draw.line((x1,y1, x2,y2), fill=color, width=1)
+        self.draw.line((p1[0], self.dimension[1] - p1[1],
+                        p2[0], self.dimension[1] - p2[1]),
+                       fill=color, width=1)
         return self
 
     def draw_photographer(self, photographer=None, lens=None, color=0, text=None):
@@ -343,17 +342,18 @@ class Map:
             lens = self.lens
         if lens is not None:
             for (summit, name) in zip(self.summits, "ABCDEFGHIKLMNOPQRSTUVWXYZ"):
-                projection = project_on_lens(photographer, lens, summit)
+                projection = project_on_lens(self.photographer, lens, summit)
                 self.draw_point(projection, name=name+"'", color=color)
-                self.draw_segment(summit, photographer, color=color)
+                self.draw_segment(summit, self.photographer, color=color)
         return self
 
 
-    def check_location(self, (x, y)):
+    def check_location(self, point):
         """
         Return true if the position is a valid position for the photographer
         That is, summits are seen the in the right order (left to right).
         """
+        (x, y) = point
         l = len(self.summits)
         for i in range(0, l):
             for j in range(i+1, l):
@@ -401,11 +401,11 @@ class Map:
                 if i > onepercent:
                     percentage += 1
                     i = 0
-                    print "%i %%" % percentage
+                    print("%i %%" % percentage)
                     if 1 > 3:
                         break
         r = 1.0 * (maxi - mini) / 100.0
-        print "error min, max: %f, %f" % (mini, maxi)
+        print("error min, max: %f, %f" % (mini, maxi))
         # Colorize map
         for x in range(0, self.dimension[0]):
             for y in range(0, self.dimension[1]):
@@ -471,7 +471,7 @@ class Map:
         counter = 1
         positions = []
         for comb in combinations:
-            print "%i/%i" % (counter, len(combinations))
+            print("%i/%i" % (counter, len(combinations)))
             counter += 1
             # Find the best position for the photographer
             self.path = []
@@ -491,7 +491,7 @@ class Map:
                 self.draw_photographer(p["photographer"], text=t+"(%f)" % (1./p["error"]))
             bary = barycenter([i['photographer'] for i in sortedPositions],
                               [1./i['error'] for i in sortedPositions])
-            print "bary: ", bary
+            print("bary: ", bary)
             self.draw_photographer(bary, text="Bary")
         return sortedPositions
 
@@ -512,4 +512,3 @@ if __name__ == "__main__":
 
     map.save("brevent-solved.jpg")
     map.show()
-    
