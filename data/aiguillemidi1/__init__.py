@@ -3,34 +3,32 @@
 import os.path
 
 # Description of the picture
-title = "Brevent"
-description = "A picture supposely taken from the Brevent."
+title = "Aiguile du Midi 1"
+description = "A picture taken from the Aiguille du Midi."
 
 # File name of the map
-mapfile = "map-mont-blanc.png"
+mapfile = "map.png"
 
 # File name of the picture
-picturefile = "brevent.png"
+picturefile = "photo.png"
 
 # Dimension of the map (optional if map provided)
-dimensions = (912, 1078)
+dimensions = (1231, 669)
 
 # Expected position of the photographer (optional)
-photographer = (262, 1078 - 213)
+photographer = (381, 669 - 436)
 
 # Summits (as seen from left to right on the picture)
 # - Latitude, Longitude coordinates
 # - position on the map, in pixels, from left/bottom
 # - position on the picture, in any unit, from left
 points = [
-    ("Aiguille du Midi",        None, (553, 1078 - 668),  35.5),
-    ("Mont Blanc du Tacul",     None, (560, 1078 - 857),  45.0),
-    ("Mont Maudit",             None, (488, 1078 - 933),  56.3),
-    ("Mont Blanc",              None, (424, 1078 - 1056), 65.8),
-    ("Dome du Gouter",          None, (298, 1078 - 974),  80.4),
-    ("Aiguille du Gouter",      None, (226, 1078 - 904),  92.3),
-    ("Aiguille de Bionnassay",  None, (153, 1078 - 1028), 97.2)
- ]
+    ("Aiguille du Triolet",  (45.9169134, 7.0246497), (1084, 669 - 158), 195)),
+    ("Aiguille de Talefre",  (45.8999213, 7.0040026), (975, 669 - 285),  290)),
+    ("Aiguille de Leschaux", (45.8874995, 7.0069444), (990, 669 - 375),  401)),
+    ("Point Walker",         (45.8688259, 6.9879852), (904, 669 - 514),  573)),
+    ("Dent du Geant",        (45.8622473, 6.9518381), (713, 669 - 562),  738))
+]
 
 # Do not touch that!
 names = [i[0] for i in points]
