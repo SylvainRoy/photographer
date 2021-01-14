@@ -17,6 +17,7 @@ dimensions = (1231, 669)
 
 # Expected position of the photographer (optional)
 photographer = (381, 669 - 436)
+photographerlocation = (45.8793106, 6.8874243)
 
 # Summits (as seen from left to right on the picture)
 # - Latitude, Longitude coordinates

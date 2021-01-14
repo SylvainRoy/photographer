@@ -4,14 +4,15 @@ import os.path
 from math import sqrt
 
 # Description of the picture
-title = "Fake data"
-description = """Fake data for testing."""
+title = "Basic, made-up data"
+description = """Basic, made-up data for testing."""
 
 # Dimension of the map
 map = (500, 500)
 
 # Expected position of the photographer (optionnal)
 photographer = (100, 100)
+photographerlocation = None
 
 # File name of the picture
 picturefile = "none"

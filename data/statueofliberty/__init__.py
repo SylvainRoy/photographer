@@ -17,6 +17,7 @@ dimensions = (814, 907)
 
 # Expected position of the photographer (optional)
 photographer = None
+photographerlocation = None
 
 # Summits (as seen from left to right on the picture)
 # - Latitude, Longitude coordinates
