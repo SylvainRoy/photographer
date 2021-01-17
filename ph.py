@@ -26,6 +26,8 @@ def position_lens(p, summits, alpha):
       (now positioned) lens.
     Return the projections of all summits on the lens
     """
+    if p is None:
+        raise RuntimeError("photograper position cannot be None")
     s1, s2toN, sM = summits[0], summits[1:-1], summits[-1]
     if alpha[0] == 0:
         s1_ = p
@@ -73,6 +75,8 @@ def optimize_lens(photographer, summits, projections):
      - projections: the corresponding projections on the picture
      - error: the error
      """
+    if photographer is None:
+        raise RuntimeError("photographer cannot be None")
     p = photographer
     p1, pM = projections[0], projections[-1]
     deltas = []

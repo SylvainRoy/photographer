@@ -10,7 +10,7 @@ description = "A picture of Chamonix taken from the Aiguille du Midi."
 mapfile = "map.png"
 
 # File name of the picture
-picturefile = "photo.png"
+picturefile = "photo.jpg"
 
 # Dimension of the map (optional if map provided)
 dimensions = (809, 844)

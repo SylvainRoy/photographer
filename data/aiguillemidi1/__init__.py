@@ -24,11 +24,11 @@ photographerlocation = (45.8793106, 6.8874243)
 # - position on the map, in pixels, from left/bottom
 # - position on the picture, in any unit, from left
 points = [
-    ("Aiguille du Triolet",  (45.9169134, 7.0246497), (1084, 669 - 158), 195)),
-    ("Aiguille de Talefre",  (45.8999213, 7.0040026), (975, 669 - 285),  290)),
-    ("Aiguille de Leschaux", (45.8874995, 7.0069444), (990, 669 - 375),  401)),
-    ("Point Walker",         (45.8688259, 6.9879852), (904, 669 - 514),  573)),
-    ("Dent du Geant",        (45.8622473, 6.9518381), (713, 669 - 562),  738))
+    ("Aiguille du Triolet",  (45.9169134, 7.0246497), (1084, 669 - 158), 195),
+    ("Aiguille de Talefre",  (45.8999213, 7.0040026), (975, 669 - 285),  290),
+    ("Aiguille de Leschaux", (45.8874995, 7.0069444), (990, 669 - 375),  401),
+    ("Point Walker",         (45.8688259, 6.9879852), (904, 669 - 514),  573),
+    ("Dent du Geant",        (45.8622473, 6.9518381), (713, 669 - 562),  738)
 ]
 
 # Do not touch that!

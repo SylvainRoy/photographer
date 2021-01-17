@@ -72,7 +72,7 @@ def photographer_area(summits, mapDimension):
         (mapDimension[0], mapDimension[1]),
         (mapDimension[0], 0),
     ]
-    # Build list of vectors (summits to summits + corners of the map)
+    # Build list of vectors (summits to summits + borders of the map)
     # Possible points are on the 'right' of these vectors.
     summit2summit = []
     for i in range(0, len(summits)):
@@ -85,7 +85,9 @@ def photographer_area(summits, mapDimension):
         (corners[3], corners[0]),
     ]
     vectors = summit2summit + borders
-    # Build list of all intersection points
+    # Build list of all intersection points between
+    # - lines built on two summits
+    # - border of the map 
     intersections = set()
     for i in range(0, len(vectors)):
         for j in range(i, len(vectors)):
@@ -104,12 +106,16 @@ def photographer_area(summits, mapDimension):
             vy = v[1][1] - v[0][1]
             px = p[0] - v[0][0]
             py = p[1] - v[0][1]
-            cross = 1.0 * vx * py - vy * px
+            cross = vx * py - vy * px
             if cross > 1e-10:  # the wonderful world of numerical computation...
                 valid = False
                 break
         if valid:
             envelop.append(p)
+    if len(envelop) == 0:
+        raise RuntimeError(
+            "There seems to be no point on the map to take such a picture!"
+        )
     # Compute barycenter of envelop
     bary = barycenter(envelop)
     # Sort points (trigo order) of the (convex) envelop

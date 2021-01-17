@@ -155,3 +155,42 @@ class Map:
                     y_ = self.dimensions[1] - y - 1
                     self.draw.point((x, y_), fill=v)
         return self
+
+    def fast_hot_colorize(self, colorfun, incr=10):
+        """
+        Colorize the map with the error value. (Faster, but still...).
+        incr is an unsigned int. incr = 0 means every pixel is computed.
+        """
+        errors = np.array([0.0] * (self.dimensions[0] * self.dimensions[1]))
+        errors = errors.reshape(self.dimensions[0], self.dimensions[1])
+        mini, maxi = 99999999999, 0
+        # For each pixel, compute the error
+        i, percentage, onepercent = 0, 0, self.dimensions[0] * self.dimensions[1] / (100 * (2 * incr + 1)**2)
+        for x in range(incr, self.dimensions[0], 2*incr+1):
+            for y in range(incr, self.dimensions[1], 2*incr+1):
+                error = colorfun((x, y))
+                errors[x, y] = error
+                mini = min(mini, error)
+                maxi = max(maxi, error)
+                i += 1
+                if i > onepercent:
+                    percentage += 1
+                    i = 0
+                    print("colorization: %i %%" % percentage)
+        print("error min, max: %f, %f" % (mini, maxi))
+        # Colorize map with normalized error
+        for x in range(incr, self.dimensions[0], 2*incr+1):
+            for y in range(incr, self.dimensions[1], 2*incr+1):
+                c = errors[x, y]
+                if c != 0:
+                    v = percentage_to_color(100 * (c - mini) / (maxi - mini))
+                    y_ = self.dimensions[1] - y - 1
+                    for i in range(-incr, incr + 1):
+                        for j in range(-incr, incr + 1):
+                            if (0 < x + i < self.dimensions[0]) and (0 < y_ + j < self.dimensions[1]):
+                                try:
+                                    self.draw.point((x + i, y_ + j), fill=v)
+                                except:
+                                    print(x, i, y_, j, v)
+                                    raise
+        return self
