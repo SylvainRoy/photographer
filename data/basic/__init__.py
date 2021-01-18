@@ -7,6 +7,9 @@ from math import sqrt
 title = "Basic, made-up data"
 description = """Basic, made-up data for testing."""
 
+# File name of the map
+mapfile = "map.png"
+
 # Dimension of the map
 map = (500, 500)
 
@@ -31,5 +34,5 @@ names = [i[0] for i in points]
 coordinates = [i[1] for i in points]
 summits = [i[2] for i in points]
 projections = [i[3] for i in points]
-picture = os.path.join(os.path.dirname(__file__), picturefile)
+#picture = os.path.join(os.path.dirname(__file__), picturefile)
 map = os.path.join(os.path.dirname(__file__), mapfile)

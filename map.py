@@ -214,7 +214,6 @@ class Map:
                     percentage += 1
                     i = 0
                     print("colorization: %i %%" % percentage)
-        r = (maxi - mini) / 100
         print("error min, max: %f, %f" % (mini, maxi))
         # Colorize map wiht normalized error
         for x in range(0, self.dimensions[0]):
