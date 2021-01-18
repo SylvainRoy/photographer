@@ -20,15 +20,22 @@ from map import Map
 
 def position_lens(p, summits, alpha):
     """
-    Position the lens based on alpha parameter:
-      s1_ and sM_ are the projections of s1 and sM on the lens based on alphas.
-    Then, compute s2_, ..., sN the projections of s2, ..., sN on the
-      (now positioned) lens.
-    Return the projections of all summits on the lens
+    Position the lens for:
+     - p: a given position of the photographer
+     - summits: the position (s1 to sM) of the summits on the map
+     - alphas: a couple of parameters, between 0 and 1, that completes
+       the definition of the position of the lens in the following way:
+         * ps1_ = alpha0 * ps1
+         * psM_ = alpha1 * psM
+       with s1_ and sM_ the projections of s1 and sM on the picture 
+    Return:
+     - s1_ to sM_, the projections of all summits on the lens
     """
     if p is None:
         raise RuntimeError("photograper position cannot be None")
     s1, s2toN, sM = summits[0], summits[1:-1], summits[-1]
+    # First compute s1_ and sM_ based on alphas, then
+    # all the intermediate summit
     if alpha[0] == 0:
         s1_ = p
         sM_ = (

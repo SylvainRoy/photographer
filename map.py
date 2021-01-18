@@ -194,3 +194,35 @@ class Map:
                                     print(x, i, y_, j, v)
                                     raise
         return self
+
+    def hot_colorize2(self, colorfun):
+        """Colorize the map with the error value (it takes time...)."""
+        # error for each pizel will be stored in an array
+        errors = np.array([0.0] * (self.dimensions[0] * self.dimensions[1]))
+        errors = errors.reshape(self.dimensions[0], self.dimensions[1])
+        mini, maxi = 99999999999, 0
+        # For each pixel, compute the error
+        i, percentage, onepercent = 0, 0, self.dimensions[0] * self.dimensions[1] / 100
+        for x in range(0, self.dimensions[0]):
+            for y in range(0, self.dimensions[1]):
+                error = colorfun((x, y))
+                errors[x, y] = error
+                mini = min(mini, error)
+                maxi = max(maxi, error)
+                i += 1
+                if i > onepercent:
+                    percentage += 1
+                    i = 0
+                    print("colorization: %i %%" % percentage)
+        r = (maxi - mini) / 100
+        print("error min, max: %f, %f" % (mini, maxi))
+        # Colorize map wiht normalized error
+        for x in range(0, self.dimensions[0]):
+            for y in range(0, self.dimensions[1]):
+                c = errors[x, y]
+                if c != 0:
+                    v = percentage_to_color(100 * (c - mini) / (maxi - mini))
+                    #v = percentage_to_color(r * c)
+                    y_ = self.dimensions[1] - y - 1
+                    self.draw.point((x, y_), fill=v)
+        return self
