@@ -15,6 +15,7 @@ Run the unit tests:
 ## Todo
 
  - hot_colorize is probably buggy. Triple check new version and replace old one.
+ - split computation and display to be able to tweak afterward.
  - the solver should provide a JSON api
  - the solver should provider a web UI
  - the whole thing should run in a docker
