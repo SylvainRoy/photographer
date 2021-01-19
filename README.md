@@ -14,8 +14,8 @@ Run the unit tests:
 
 ## Todo
 
- - hot_colorize is probably buggy. Triple check new version and replace old one.
- - split computation and display to be able to tweak afterward.
+ - optimise_picture return result (much) bigger than 1. How come?
+ - hot_colorize to use a log scale for the color
  - the solver should provide a JSON api
  - the solver should provider a web UI
  - the whole thing should run in a docker
@@ -39,3 +39,5 @@ Run the unit tests:
         - search to consider alpha bigger that 1
             - OR scale picture according to alpha
         - Internal error function should be a std function called evaluate_picture_position
+ - hot_colorize is probably buggy. Triple check new version and replace old one.
+ - split computation and display to be able to tweak afterward.

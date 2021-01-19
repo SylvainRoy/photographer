@@ -55,16 +55,16 @@ def compute_projection_on_picture(photographer, summits, alpha):
 
 LensResult = namedtuple('LensResult', ["lens", "picture", "projections", "error"])
 
-def optimize_lens(photographer, summits, projections):
+def optimize_picture(photographer, summits, projections):
     """
-    Optimize the position of the lens for a given position of the photographer.
+    Optimize the position of the picture for a given position of the photographer.
     Input:
      - the position of the photographer (p)
      - the positions of at least three summits on the map
      - the projections of the summits on the picture
     Output:
-     - lens: the position of the middle of the lens (the point on the lens that
-        is ortho with photographer)
+     - lens: the position of the middle of the lens (the point on the picture that
+        is ortho with the photographer)
      - picture: the position of the middle of the picture
      - projections: the corresponding projections on the picture
      - error: the error
@@ -130,7 +130,7 @@ def find_photograper(dimensions, summits, projections, init=None):
     # define error function to minimize
     path = []
     def errorfun(position):
-        error = optimize_lens(position, summits, projections).error
+        error = optimize_picture(position, summits, projections).error
         path.append(position)
         return error
 

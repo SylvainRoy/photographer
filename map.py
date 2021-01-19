@@ -36,6 +36,9 @@ class Map:
         else:
             raise RuntimeError("A Map requires either a file or a size.")
         self.draw = ImageDraw.Draw(self.map)
+        self.error_matrix = None
+        self.error_min = None
+        self.error_max = None
 
     def copy(self):
         """Return a deep copy of the map"""
@@ -125,42 +128,53 @@ class Map:
                     self.draw.point((x, y), fill=newcolor)
         return self
 
+    def reset_color_matrix(self):
+        """Reset the error matrix."""
+        self.error_matrix = None
+        self.error_max = None
+        self.error_min = None
+        return self
+
+    def compute_color_matrix(self, colorfun, incr=0):
+        """
+        Compute, save and return the error matrix for colorfun.
+        """
+        if self.error_matrix is not None:
+            return self.error_matrix, self.error_min, self.error_max
+
+        self.error_matrix = np.zeros(self.dimensions)
+        self.error_min, self.error_max = 99999999999, 0
+
+        # For each group of pixels, compute the error, min and max
+        percentage, i = 0, 0
+        total = len(range(incr, self.dimensions[0], 2*incr+1)) * len(range(incr, self.dimensions[1], 2*incr+1))
+        for x in range(incr, self.dimensions[0], 2*incr+1):
+            for y in range(incr, self.dimensions[1], 2*incr+1):
+                error = colorfun((x, y))
+                self.error_matrix[x, y] = error
+                self.error_min = min(self.error_min, error)
+                self.error_max = max(self.error_max, error)
+                i += 1
+                if 100 * i / total > percentage:
+                    percentage += 1
+                    print("%i %%" % percentage)
+        print("error min, max: %f, %f" % (self.error_min, self.error_max))
+        return self.error_matrix, self.error_min, self.error_max
+
     def hot_colorize(self, colorfun, incr=0):
         """
         Colorize the map with the error value. (Faster, but still...).
         incr is an unsigned int. The bigger, the faster and the less accurate.
         incr = 0 means every pixel is computed.
         """
-        errors = np.array([0.0] * (self.dimensions[0] * self.dimensions[1]))
-        errors = errors.reshape(self.dimensions[0], self.dimensions[1])
-        mini, maxi = 99999999999, 0
-        # For each pixel, compute the error
-        i, percentage, onepercent = 0, 0, self.dimensions[0] * self.dimensions[1] / (100 * (2 * incr + 1)**2)
-        for x in range(incr, self.dimensions[0], 2*incr+1):
-            for y in range(incr, self.dimensions[1], 2*incr+1):
-                error = colorfun((x, y))
-                errors[x, y] = error
-                mini = min(mini, error)
-                maxi = max(maxi, error)
-                i += 1
-                if i > onepercent:
-                    percentage += 1
-                    i = 0
-                    print("colorization: %i %%" % percentage)
-        print("error min, max: %f, %f" % (mini, maxi))
+        error_matrix, error_min, error_max = self.compute_color_matrix(colorfun, incr)
         # Colorize map with normalized error
         for x in range(incr, self.dimensions[0], 2*incr+1):
             for y in range(incr, self.dimensions[1], 2*incr+1):
-                c = errors[x, y]
-                if c != 0:
-                    v = percentage_to_color(100 * (c - mini) / (maxi - mini))
-                    y_ = self.dimensions[1] - y - 1
-                    for i in range(-incr, incr + 1):
-                        for j in range(-incr, incr + 1):
-                            if (0 < x + i < self.dimensions[0]) and (0 < y_ + j < self.dimensions[1]):
-                                try:
-                                    self.draw.point((x + i, y_ + j), fill=v)
-                                except:
-                                    print(x, i, y_, j, v)
-                                    raise
+                c = error_matrix[x, y]
+                v = percentage_to_color(100 * (c - error_min) / (error_max - error_min))
+                for i in range(-incr, incr + 1):
+                    for j in range(-incr, incr + 1):
+                        y_ = self.dimensions[1] - y - 1
+                        self.draw.point((x + i, y_ + j), fill=v)
         return self
