@@ -62,6 +62,13 @@ class Map:
         self.map.save(filename)
         return self
 
+    def draw_pixel(self, point, color=0):
+        """Draw a pixel on the map."""
+        (x, y) = point
+        y_ = self.dimensions[1] - y
+        self.draw.point((x, y_), fill=color)
+        return self
+
     def draw_point(self, point, name="", color=0):
         """Draw a point on the map"""
         (x, y) = point
@@ -175,6 +182,5 @@ class Map:
                 percentage = 100 * (err - error_min) / (error_max - error_min)
                 percentage = max(0, min(100, transfun(percentage)))
                 color = percentage_to_color(percentage)
-                y_ = self.dimensions[1] - y - 1
-                self.draw.point((x, y_), fill=color)
+                self.draw_pixel((x, y), color=color)
         return self
