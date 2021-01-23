@@ -18,7 +18,7 @@ def percentage_to_color(i):
         i = int(i)
     except:
         i = 0
-    return (255 - 255 * i // 100, 255 - 255 * i // 100, 255, 0)
+    return (255 - 255 * i // 100, 255 - 255 * i // 100, 255, 255)
 
 
 class Map:
@@ -36,9 +36,7 @@ class Map:
         else:
             raise RuntimeError("A Map requires either a file or a size.")
         self.draw = ImageDraw.Draw(self.map)
-        self.error_matrix = None
-        self.error_min = None
-        self.error_max = None
+        self.error_matrixes = {}
 
     def copy(self):
         """Return a deep copy of the map"""
@@ -130,51 +128,53 @@ class Map:
 
     def reset_color_matrix(self):
         """Reset the error matrix."""
-        self.error_matrix = None
-        self.error_max = None
-        self.error_min = None
+        self.error_matrixes = {}
         return self
 
     def compute_color_matrix(self, colorfun, incr=0):
         """
         Compute, save and return the error matrix for colorfun.
         """
-        if self.error_matrix is not None:
-            return self.error_matrix, self.error_min, self.error_max
-
-        self.error_matrix = np.zeros(self.dimensions)
-        self.error_min, self.error_max = 99999999999, 0
-
+        # First try to retrieve data from cache
+        if (colorfun in self.error_matrixes) and (incr in self.error_matrixes[colorfun]):
+            return  self.error_matrixes[colorfun][incr]
         # For each group of pixels, compute the error, min and max
-        percentage, i = 0, 0
+        matrix = np.zeros(self.dimensions)
+        error_min, error_max = 99999999999, 0
+        percentage, cur = 0, 0
         total = len(range(incr, self.dimensions[0], 2*incr+1)) * len(range(incr, self.dimensions[1], 2*incr+1))
         for x in range(incr, self.dimensions[0], 2*incr+1):
             for y in range(incr, self.dimensions[1], 2*incr+1):
                 error = colorfun((x, y))
-                self.error_matrix[x, y] = error
-                self.error_min = min(self.error_min, error)
-                self.error_max = max(self.error_max, error)
-                i += 1
-                if 100 * i / total > percentage:
+                for i in range(-incr, incr + 1):
+                    for j in range(-incr, incr + 1):
+                        if x + i < self.dimensions[0] and y + j < self.dimensions[1]:
+                            matrix[x + i, y + j] = error
+                error_min = min(error_min, error)
+                error_max = max(error_max, error)
+                cur += 1
+                if 100 * cur / total > percentage:
                     percentage += 1
-                    print("%i %%" % percentage)
-        print("error min, max: %f, %f" % (self.error_min, self.error_max))
-        return self.error_matrix, self.error_min, self.error_max
+                    print(f"{percentage}% ", end="")
+        print("\nerror min, max: %f, %f" % (error_min, error_max))
+        # Save data in cache
+        self.error_matrixes.setdefault(colorfun, {})[incr] = (matrix, error_min, error_max)
+        return  self.error_matrixes[colorfun][incr]
 
-    def hot_colorize(self, colorfun, incr=0):
+    def hot_colorize(self, colorfun, transfun=lambda x: x, incr=0):
         """
-        Colorize the map with the error value. (Faster, but still...).
+        Colorize the map with the error value.
         incr is an unsigned int. The bigger, the faster and the less accurate.
         incr = 0 means every pixel is computed.
         """
-        error_matrix, error_min, error_max = self.compute_color_matrix(colorfun, incr)
+        (error_matrix, error_min, error_max) = self.compute_color_matrix(colorfun, incr)
         # Colorize map with normalized error
-        for x in range(incr, self.dimensions[0], 2*incr+1):
-            for y in range(incr, self.dimensions[1], 2*incr+1):
-                c = error_matrix[x, y]
-                v = percentage_to_color(100 * (c - error_min) / (error_max - error_min))
-                for i in range(-incr, incr + 1):
-                    for j in range(-incr, incr + 1):
-                        y_ = self.dimensions[1] - y - 1
-                        self.draw.point((x + i, y_ + j), fill=v)
+        for x in range(self.dimensions[0]):
+            for y in range(self.dimensions[1]):
+                err = error_matrix[x, y]
+                percentage = 100 * (err - error_min) / (error_max - error_min)
+                percentage = max(0, min(100, transfun(percentage)))
+                color = percentage_to_color(percentage)
+                y_ = self.dimensions[1] - y - 1
+                self.draw.point((x, y_), fill=color)
         return self

@@ -105,8 +105,12 @@ def optimize_picture(photographer, summits, projections):
     error = res.fun
     # move picture away/closer to have respect scale
     s_ = compute_projection_on_picture(photographer, summits, alpha)
-    rho = abs(projections[1] - projections[0]) / distance(s_[1], s_[0])
-    s__ = compute_projection_on_picture(photographer, summits, alpha, rho)
+    if distance(s_[1], s_[0]) == 0:
+        rho = None
+        s__ = [photographer]*5
+    else:
+        rho = abs(projections[1] - projections[0]) / distance(s_[1], s_[0])
+        s__ = compute_projection_on_picture(photographer, summits, alpha, rho)
     return PicturePosition(projections=s__ , alpha=alpha, rho=rho, error=error)
 
 

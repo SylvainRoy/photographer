@@ -14,8 +14,6 @@ Run the unit tests:
 
 ## Todo
 
- - optimise_picture return result (much) bigger than 1. How come?
- - hot_colorize to use a log scale for the color
  - the solver should provide a JSON api
  - the solver should provider a web UI
  - the whole thing should run in a docker
@@ -41,3 +39,6 @@ Run the unit tests:
         - Internal error function should be a std function called evaluate_picture_position
  - hot_colorize is probably buggy. Triple check new version and replace old one.
  - split computation and display to be able to tweak afterward.
+ - optimise_picture return result (much) bigger than 1. How come?
+    - Cause the projection can be outside of the picture, so normalizing with the max distance of the summits doesn't necessarily bring it below 1.
+ - hot_colorize to use a log scale for the color
