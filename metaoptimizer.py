@@ -5,55 +5,66 @@ Algorithm to locate the photographer.
 This algorithm relies on multiple execution of another optimizer.
 """
 
-from tools import barycenter, selections_of_five_summits
-from optimizer1 import find_photograper as find_photograper_basic
-from optimizer1 import project_on_lens
+from collections import namedtuple
 
-def find_photograper(dimensions, summits, projections, init=None):
+from optimizer import compute_projection_on_picture
+from optimizer import find_photograper as find_photograper_basic
+from tools import barycenter, selections_of_five_summits
+
+
+MetaPhotographerPosition = namedtuple('MetaPhotographer', ["photographer", "error", "details"])
+
+
+def find_photograper_for_5(dimensions, summits, projections, init=None):
     """
     Position the photographer where the picture was taken for
     all possible combinations of 5 summits.
     """
     # Takes 'middle' of area where the photographer can be as start of search
     combinations = selections_of_five_summits(summits)
-    counter = 1
-    positions = []
+    counter = 0
+    details = []
+    print("Combinations of summits: ", end="")    
     for comb in combinations:
-        print("Combinations of summits: %i/%i" % (counter, len(combinations)))
         counter += 1
+        print("%i/%i" % (counter, len(combinations)), end=" ")
         # Find the best position for the photographer
         photographer, error, path = find_photograper_basic(
             dimensions=dimensions,
-            summits=[summits[comb[i]] for i in range(0, 5)],
-            projections=[projections[comb[i]] for i in range(0, 5)],
+            summits=[summits[i] for i in comb],
+            projections=[projections[i] for i in comb],
             init=init
         )
-        positions.append({
+        details.append({
             "photographer": photographer,
             "error": error,
             "path": path,
-            "summits_used": comb
+            "summits": summits,
+            "projections": projections
         })
-    # todo:
-    # - return barycentre of all solution
-    # - option: weighted with their inverse error
-    return positions
+    print()
+    # Compute barycenter weighted on inverse error
+    bary = barycenter(
+        points=[i["photographer"] for i in details],
+        weights=[1 / i["error"] for i in details]
+    )
+    error = sum(i["error"] for i in details)
+    return MetaPhotographerPosition(photographer=bary, error=error, details=details)
 
 
 def run(map, summits, projections):
     """
     Run the optimization and display findings on map.
     """
-    positions = find_photograper(map.dimensions, summits, project_on_lens)
+    res = find_photograper_for_5(map.dimensions, summits, projections)
+    positions = res.details
     sortedPositions = sorted(positions, key=lambda p: p["error"])
-    for (p, t) in zip(sortedPositions, "ABCDEFGHIJKLMNOPQRSTUVWXYZ"):
+    for i,  p in enumerate(sortedPositions):
         map.draw_point(
             point=p["photographer"],
-            name=t + "(%f)" % (1.0 / p["error"])
+            #name="{}: {}".format(i, 1.0 / p["error"]),
+            color="green"
         )
-        map.draw_path(p["path"])
-    bary = barycenter(
-        [i["photographer"] for i in sortedPositions],
-        [1.0 / i["error"] for i in sortedPositions],
-    )
-    map.draw_point(bary, name="Bary")
+    bary = res.photographer
+    map.draw_point(bary, name="Q", color="red")
+    return res

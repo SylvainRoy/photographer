@@ -126,7 +126,9 @@ def find_photograper(dimensions, summits, projections, init=None):
     - projections: distance of the projections of the summits from the left of the picture
     - init: an optional initial position for the search 
     Output:
-    - 
+    - The photographer position
+    - The error at the photographer position
+    - The optimisation path
     """
     # If not initial position, take the middle of the possible area
     if init is None:
@@ -162,3 +164,4 @@ def run(map, summits, projections):
     # draw on the map
     map.draw_path(res.path, color="blue")
     map.draw_point(res.photographer, name="%.8f" % res.error, color="red")
+    return res
