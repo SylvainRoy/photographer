@@ -130,7 +130,7 @@ def find_photograper(dimensions, summits, projections, init=None):
     - The error at the photographer position
     - The optimisation path
     """
-    # If not initial position, take the middle of the possible area
+    # If no initial position, take the middle of the possible area
     if init is None:
         envelop = photographer_area(summits, dimensions)
         init = barycenter(envelop)

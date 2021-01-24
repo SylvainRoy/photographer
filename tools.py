@@ -60,6 +60,7 @@ def is_valid_location(point, summits):
                 return False
     return True
 
+
 def photographer_area(summits, mapDimension):
     """
     Return the envelop (a list of point) of the area where the photograph is located.
