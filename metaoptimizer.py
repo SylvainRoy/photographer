@@ -15,7 +15,7 @@ from tools import barycenter, selections_of_five_summits
 MetaPhotographerPosition = namedtuple('MetaPhotographer', ["photographer", "error", "details"])
 
 
-def find_photograper_for_5(dimensions, summits, projections, init=None):
+def find_photograper_for_5(summits, projections, init=None):
     """
     Position the photographer where the picture was taken for
     all possible combinations of 5 summits.
@@ -30,7 +30,6 @@ def find_photograper_for_5(dimensions, summits, projections, init=None):
         print("%i/%i" % (counter, len(combinations)), end=" ")
         # Find the best position for the photographer
         photographer, error, path = find_photograper_basic(
-            dimensions=dimensions,
             summits=[summits[i] for i in comb],
             projections=[projections[i] for i in comb],
             init=init
@@ -56,7 +55,7 @@ def run(map, summits, projections):
     """
     Run the optimization and display findings on map.
     """
-    res = find_photograper_for_5(map.dimensions, summits, projections)
+    res = find_photograper_for_5(summits, projections)
     positions = res.details
     sortedPositions = sorted(positions, key=lambda p: p["error"])
     for i,  p in enumerate(sortedPositions):

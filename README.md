@@ -14,6 +14,7 @@ Run the unit tests:
 
 ## Todo
 
+ - the solver doesn't work anymore for statueofliberty. The initial position lead to a wrong local optimum.
  - the solver should provide a JSON api
  - the solver should provider a web UI
  - the whole thing should run in a docker

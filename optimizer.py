@@ -117,7 +117,7 @@ def optimize_picture(photographer, summits, projections):
 PhotographerPosition = namedtuple('PhotographerPosition', ["photographer", "error", "path"])
 
 
-def find_photograper(dimensions, summits, projections, init=None):
+def find_photograper(summits, projections, init=None):
     """
     Position the photographer where the picture was taken.
     Input:
@@ -130,10 +130,13 @@ def find_photograper(dimensions, summits, projections, init=None):
     - The error at the photographer position
     - The optimisation path
     """
-    # If no initial position, take the middle of the possible area
+    # If no initial position, take a point in front of the two extrem summits
     if init is None:
-        envelop = photographer_area(summits, dimensions)
-        init = barycenter(envelop)
+        dist = 1
+        init = (
+            (summits[0][0] + summits[-1][0]) / 2 + dist * (summits[-1][1] - summits[0][1]),
+            (summits[0][1] + summits[-1][1]) / 2 - dist * (summits[-1][0] - summits[0][0])
+        )
 
     path = []
     def errorfun(position):
@@ -146,8 +149,7 @@ def find_photograper(dimensions, summits, projections, init=None):
     res = minimize(
         errorfun,
         init,
-        method="Nelder-Mead",
-        #bounds=((0, dimensions[0]), (0, dimensions[1])),
+        method="Nelder-Mead"
     )
     return PhotographerPosition(photographer=res.x, error=res.fun, path=path)
 
@@ -157,7 +159,6 @@ def run(map, summits, projections):
     Run the optimization and display findings on map.
     """
     res = find_photograper(
-        dimensions=map.dimensions,
         summits=summits,
         projections=projections
     )

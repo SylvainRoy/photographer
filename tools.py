@@ -212,3 +212,19 @@ def selections_of_five_summits(summits):
                     for m in range(l + 1, ll):
                         out.append([i, j, k, l, m])
     return out
+
+
+def change_coordinate_funs(utm_coord, local_coord):
+    """
+    Return two functions to change the coordinate system of a point.
+    Input: a list of at list two points in the two coordinate system.
+    """
+    alphax = (local_coord[-1][0] - local_coord[0][0]) / (utm_coord[-1][0] - utm_coord[0][0])
+    alphay = (local_coord[-1][1] - local_coord[0][1]) / (utm_coord[-1][1] - utm_coord[0][1])
+    Xo = utm_coord[0][0] - local_coord[0][0] / alphax
+    Yo = utm_coord[0][1] - local_coord[0][1] / alphay
+    def utmtolocal(p):
+        return ((p[0] - Xo) * alphax, (p[1] - Yo) * alphay) 
+    def localtoutm(p):
+        return (p[0] / alphax + Xo, p[1] / alphay + Yo)
+    return utmtolocal, localtoutm
