@@ -10,35 +10,95 @@ Let say you have a picture with at least 5 identified points (e.g. summits) and 
 
 Run the unit tests:
   > python -m unittest discover .
-  
+
+See it in action:
+ - Check the notebook 'Locate Photograper'
+
 
 ## Todo
 
  - the solver should provide a JSON api
  - the solver should provider a web UI
  - the whole thing should run in a docker
- - other optimization mimimization (e.g. x^3)
+ - scoring mechanism to rank optimizers
+    - other optimization mimimization (e.g. x^3)
  - better handling of situation where the optimization get out of the acceptable zone
 
 
- ## Done
+## Notes on Google Maps API
 
- - the Map class should be in a different file
- - the Map class should only do display. No computation
- - (more) real pictures!!!
- - ph.py should be split in optimizer1.py and main.py
- - there should be room for several solver
- - Start a new optimizer:
-    - position_lens should be compute_projections_on_picture
-        - the alphas are not limited between 0 and 1 (the dimensions on the picture
-        and on the map are mixed while probably not in the same units!)
-        - the way it projects s2_ to sM_ seems wrong in the limit cases of an alpha = 0
-    - optimize_photographer should be find_photographer
-        - search to consider alpha bigger that 1
-            - OR scale picture according to alpha
-        - Internal error function should be a std function called evaluate_picture_position
- - hot_colorize is probably buggy. Triple check new version and replace old one.
- - split computation and display to be able to tweak afterward.
- - optimise_picture return result (much) bigger than 1. How come?
-    - Cause the projection can be outside of the picture, so normalizing with the max distance of the summits doesn't necessarily bring it below 1.
- - hot_colorize to use a log scale for the color
+To do before to get started:
+ - https://developers.google.com/maps/gmp-get-started
+
+google.maps.Map class
+ - constructor(
+    - mapDiv:div object return by getElementById(),
+    - opts?: {center:..., zoom:...}           
+ - getBounds() -> LatLngBounds
+ - addListener(eventName:string, handler:fun) -> MapsEventListener
+    - eventName: "click"
+    - fun(event:MapMouseEvent or IconMouseEvent)
+
+google.maps.MapMouseEvent & google.maps.IconMouseEvent interfaces
+ - description:
+    - both event contain the below. So canbe treated in the same way.
+    - fired when the user clicks on the map.
+ - properties:
+    - latLng: The lat/long that was below the cursos when the event occured
+
+google.maps.LatLng class
+- description:
+  - No need to build it, most functions accept {lat: -34, lng: 151}
+- metods:
+  - lat()
+  - lon()
+  - toJSON()
+  - toString()
+  - toUrlValue()
+
+Markers is the way to have points on the map.
+
+google.maps.Marker
+ - ref:
+    - https://developers.google.com/maps/documentation/javascript/markers?hl=en
+ - properties:
+    - position
+    - map
+    - title
+ - methods:
+    - setMap(map)
+        - map == null --> erase marker
+
+
+The following piece of code seems really close to what I want (ref: https://developers.google.com/maps/documentation/javascript/markers?hl=en#maps_marker_labels-javascript)
+
+
+    // In the following example, markers appear when the user clicks on the map.
+    // Each marker is labeled with a single alphabetical character.
+    const labels = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    let labelIndex = 0;
+    
+    function initMap() {
+      const bangalore = { lat: 12.97, lng: 77.59 };
+      const map = new google.maps.Map(document.getElementById("map"), {
+        zoom: 12,
+        center: bangalore,
+      });
+      // This event listener calls addMarker() when the map is clicked.
+      google.maps.event.addListener(map, "click", (event) => {
+        addMarker(event.latLng, map);
+      });
+      // Add a marker at the center of the map.
+      addMarker(bangalore, map);
+    }
+    
+    // Adds a marker to the map.
+    function addMarker(location, map) {
+      // Add the marker at the clicked location, and add the next-available label
+      // from the array of alphabetical characters.
+      new google.maps.Marker({
+        position: location,
+        label: labels[labelIndex++ % labels.length],
+        map: map,
+      });
+    }
