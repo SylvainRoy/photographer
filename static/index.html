@@ -1,21 +1,23 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Simple Map</title>
+    <title>Photographer</title>
     
     <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
-    <script
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBO537xsIPtelBtuGlhnx7PmaW_nIjSwyc&callback=initMap&libraries=&v=weekly"
-    defer
-    ></script>
-    
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBO537xsIPtelBtuGlhnx7PmaW_nIjSwyc&callback=initMap&libraries=&v=weekly" defer></script>
+
+    <!-- Map style -->
     <style type="text/css">
+        
+        /*
+         * Map
+         */
+
         /* Always set the map height explicitly to define the size of the div
         * element that contains the map. */
         #map {
             height: 50%;
         }
-        
         /* Optional: Makes the sample page fill the window. */
         html,
         body {
@@ -25,6 +27,7 @@
         }
     </style>
 
+    <!-- Map script -->
     <script>
         let map;
         
@@ -54,14 +57,22 @@
             new google.maps.Marker({
                 position: location,
                 label: labels[labelIndex++ % labels.length],
+                draggable:true,
                 map: map,
             });
         }
     </script>
+
 </head>
 <body>
-    <h1>Where is the photographer?</h1>
+    <h1>Where was the photographer?</h1>
+    
+    <h2>Step 1:</h2>
+    Load the photo and indicate at least 3 points that you can locate on the map.
     <div id="photo"></div>
+
+    <h2>Step 2:</h2>
+    Locate the same points on the map below.
     <div id="map"></div>
 </body>
 </html>

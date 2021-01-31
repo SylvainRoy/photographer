@@ -11,7 +11,10 @@ Let say you have a picture with at least 5 identified points (e.g. summits) and 
 Run the unit tests:
   > python -m unittest discover .
 
-See it in action:
+Run the server, locally:
+  > uvicorn server:app --reload
+
+Understand how it works:
  - Check the notebook 'Locate Photograper'
 
 
@@ -25,7 +28,24 @@ See it in action:
  - better handling of situation where the optimization get out of the acceptable zone
 
 
-## Notes on Google Maps API
+
+## Notes on marker.js
+
+### Uploading an image in the page
+
+ - This tutorial:
+    - https://www.youtube.com/watch?v=VElnT8EoEEM&ab_channel=dcode
+ - And the associated code:
+    - https://svelte.dev/repl/b5333059a2f548809a3ac3f60a17a8a6?version=3.31.2
+
+### Anotating the image with markers:
+
+ - https://markerjs.com/
+
+
+## Notes on the integration of the map
+
+Using Google Maps API.
 
 To do before to get started:
  - https://developers.google.com/maps/gmp-get-started
