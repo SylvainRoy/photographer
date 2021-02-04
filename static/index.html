@@ -68,21 +68,15 @@
     
     <!-- Loading and marking image script -->
     <script>
+        /*
+         *  Load and preview the picture
+         */
+        
         const inpFile = document.getElementById("inpFile");
         const previewContainer = document.getElementById("imagePreview");
         const previewImage = previewContainer.querySelector(".image-preview__image");       
         const previewDefaultText = previewContainer.querySelector(".image-preview__default-text");
 
-        // Show the marker tool on the picture
-        function showMarkerArea(target) {
-            const markerArea = new markerjs2.MarkerArea(target);
-            // markerArea.settings.displayMode = 'popup';
-            markerArea.availableMarkerTypes = [markerjs2.ArrowMarker];
-            markerArea.addRenderEventListener((imgURL) => target.src = imgURL);
-            markerArea.show();
-        };
-
-        // Load and preview picture in the browser
         inpFile.addEventListener("change", function() {
             const file = this.files[0];
             if (file) {
@@ -100,13 +94,28 @@
                 previewImage.setAttribute("src", null);
             }
         });
+
+        /*
+         * Set up the picture editor
+         */
+
+        markerArea = null;
+
+        // Show the marker tool on the picture
+        function showMarkerArea(target) {
+            markerArea = new markerjs2.MarkerArea(target);
+            // markerArea.settings.displayMode = 'popup';
+            markerArea.availableMarkerTypes = [markerjs2.ArrowMarker];
+            markerArea.addRenderEventListener((imgURL) => target.src = imgURL);
+            markerArea.show();
+        };
     </script>
 
     <!-- Map script -->
     <script>
         let map;
         
-        // In the following example, markers appear when the user clicks on the map.
+        // Markers appear when the user clicks on the map.
         // Each marker is labeled with a single alphabetical character.
         const labels = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         let labelIndex = 0;
@@ -125,17 +134,28 @@
             addMarker(bangalore, map);
         }
         
+        var markers = [];
+
         // Adds a marker to the map.
         function addMarker(location, map) {
-            // Add the marker at the clicked location, and add the next-available label
-            // from the array of alphabetical characters.
-            new google.maps.Marker({
+            // Add the marker at the clicked location.
+            var marker = new google.maps.Marker({
                 position: location,
                 label: labels[labelIndex++ % labels.length],
                 draggable:true,
                 map: map,
             });
+            markers.push(marker);
         }
+    </script>
+
+    <script>
+        function collectInputs() {
+            return {
+                points: markerArea.getState().markers.map(function (marker) {return marker.x2}),
+                summits: markers.map(function(marker) {return {lat: marker.position.lat(), lng: marker.position.lng()}})
+            };  
+        };
     </script>
 
 </body>
