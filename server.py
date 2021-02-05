@@ -24,4 +24,4 @@ class Locate(BaseModel):
 
 @app.post("/locate/")
 async def locate(location: Locate):
-  return {"location": (45.1, 7.1)}
+  return {"location": (12.97, 77.59)}

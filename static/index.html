@@ -113,32 +113,28 @@
 
     <!-- Map script -->
     <script>
-        let map;
-        
+        var map;
+        var markers = []; // the list of markers added on the map
+
         // Markers appear when the user clicks on the map.
         // Each marker is labeled with a single alphabetical character.
         const labels = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         let labelIndex = 0;
         
+        // Init the map
         function initMap() {
-            const bangalore = { lat: 12.97, lng: 77.59 };
-            const map = new google.maps.Map(document.getElementById("map"), {
+            map = new google.maps.Map(document.getElementById("map"), {
                 zoom: 12,
-                center: bangalore,
+                center: { lat: 45.83550785027975, lng: 6.863880441774906 },
             });
-            // This event listener calls addMarker() when the map is clicked.
+            // Add a marker when the map is clicked.
             google.maps.event.addListener(map, "click", (event) => {
                 addMarker(event.latLng, map);
             });
-            // Add a marker at the center of the map.
-            addMarker(bangalore, map);
         }
         
-        var markers = [];
-
         // Adds a marker to the map.
         function addMarker(location, map) {
-            // Add the marker at the clicked location.
             var marker = new google.maps.Marker({
                 position: location,
                 label: labels[labelIndex++ % labels.length],
@@ -149,12 +145,44 @@
         }
     </script>
 
+    <!-- Server interface -->
     <script>
-        function collectInputs() {
-            return {
-                points: markerArea.getState().markers.map(function (marker) {return marker.x2}),
-                summits: markers.map(function(marker) {return {lat: marker.position.lat(), lng: marker.position.lng()}})
+        function locatePhotographer() {
+
+            // Build the json message
+            const payload = {
+                projections: markerArea.getState().markers.map(function (marker) {return marker.x2}),
+                points: markers.map(function(marker) {return {lat: marker.position.lat(), lng: marker.position.lng()}})
             };  
+
+            // Call server
+            fetch('http://localhost:8000/locate/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Recv:', data);
+
+                loc = {lat: data.location[0], lng: data.location[1]};
+                console.log('Location:', loc);
+                
+                // Add a marker at the photographer location.
+                var marker = new google.maps.Marker({
+                    position: loc,
+                    label: "X",
+                    draggable:false,
+                    map: map,
+                });
+                // Center on photographer.
+                map.setCenter(loc)
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
         };
     </script>
 
