@@ -155,9 +155,16 @@
         function locatePhotographer() {
 
             // Build the json message
+            const projections = markerArea
+                .getState().markers
+                .map(function (marker) {return marker.x2})
+                .sort(function (a, b) {return a - b});
+            const points = markers
+                .sort(function (a, b) {if (a.label < b.label) {return -1}; if (a.label > b.label) {return 1}; return 0})
+                .map(function(marker) {return {lat: marker.position.lat(), lng: marker.position.lng()}});
             const payload = {
-                projections: markerArea.getState().markers.map(function (marker) {return marker.x2}),
-                points: markers.map(function(marker) {return {lat: marker.position.lat(), lng: marker.position.lng()}})
+                projections: projections,
+                points: points
             };  
 
             // Call server
