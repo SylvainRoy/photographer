@@ -3,9 +3,9 @@
 """
 A server to provide the service from the web.
 Run it with:
-  uvicorn server:app
+    uvicorn server:app
 or
-  uvicorn main:app --reload
+    uvicorn main:app --reload
 """
 
 from typing import List, Tuple
@@ -23,5 +23,7 @@ class Locate(BaseModel):
     latlng: List[Tuple[float, float]] = []
 
 @app.post("/locate/")
-async def locate(location: Locate):
-  return {"location": (12.97, 77.59)}
+async def locate(query: Locate):
+    reply = (12.97, 77.59)
+    print("locate request {} => {}".format(query, reply))
+    return {"location": reply}
