@@ -10,7 +10,19 @@ Let say you have a picture with at least 5 identified points (e.g. summits) and 
 
 Run the unit tests:
   > python -m unittest discover .
-  
+
+Run the server, locally:
+  > uvicorn server:app --reload
+
+Manually test the server:
+  curl -d '{"projections":[1.2, 3.4], "latlng":[[1.3, 6.7], [5.4, 9.6]]}' -H "Content-Type: ST http://localhost:8000/locate/
+
+or with a data file:
+  curl -d "@data.json" -H "Content-Type: ST http://localhost:8000/locate/
+
+Understand how it works:
+ - Check the notebook 'Locate Photograper'
+
 
 ## Todo
 
@@ -18,29 +30,39 @@ Run the unit tests:
  - the solver should provide a JSON api
  - the solver should provider a web UI
  - the whole thing should run in a docker
- - other optimization mimimization (e.g. x^3)
+ - scoring mechanism to rank optimizers
+    - other optimization mimimization (e.g. x^3)
  - better handling of situation where the optimization get out of the acceptable zone
  - test accuracy with only three points
+ - remove dead code.
+
+## Notes
+
+### JSON
+
+write:
+  JSON.stringify({"action":"status", "switch":"west"})
+
+read:
+  var arr = JSON.parse(response);
 
 
- ## Done
+## Notes on the API
 
- - the Map class should be in a different file
- - the Map class should only do display. No computation
- - (more) real pictures!!!
- - ph.py should be split in optimizer1.py and main.py
- - there should be room for several solver
- - Start a new optimizer:
-    - position_lens should be compute_projections_on_picture
-        - the alphas are not limited between 0 and 1 (the dimensions on the picture
-        and on the map are mixed while probably not in the same units!)
-        - the way it projects s2_ to sM_ seems wrong in the limit cases of an alpha = 0
-    - optimize_photographer should be find_photographer
-        - search to consider alpha bigger that 1
-            - OR scale picture according to alpha
-        - Internal error function should be a std function called evaluate_picture_position
- - hot_colorize is probably buggy. Triple check new version and replace old one.
- - split computation and display to be able to tweak afterward.
- - optimise_picture return result (much) bigger than 1. How come?
-    - Cause the projection can be outside of the picture, so normalizing with the max distance of the summits doesn't necessarily bring it below 1.
- - hot_colorize to use a log scale for the color
+{
+  projections: [123, 456, ...],
+  latlng: [
+    [45.123, 7.456],
+    [47.123, 14.456],
+    ...
+  ]
+}
+
+{
+  projections: [123, 456, ...],
+  coord: [
+    [45.123, 7.456],
+    [47.123, 14.456],
+    ...
+  ]
+}
