@@ -20,6 +20,7 @@ Run the unit tests:
  - the whole thing should run in a docker
  - other optimization mimimization (e.g. x^3)
  - better handling of situation where the optimization get out of the acceptable zone
+ - test accuracy with only three points
 
 
  ## Done

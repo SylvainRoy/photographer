@@ -24,14 +24,14 @@ photographerlocation = None
 # - position on the map, in pixels, from left/bottom
 # - position on the picture, in any unit, from left
 points = [
-    ("High building on the very left",  (40.7136346, -74.0446077),  (297, 907 - 360),  163),
-    ("Ellis Island West",               (40.697827,  -74.043181),   (302, 907 - 451),  297),
-    ("Big building on the left",        (40.7130429, -74.0340377),  (345, 907 - 363),  619),
-    ("Ellis Island Tip of Triangle",    (40.6980437, -74.0393193),  (325, 907 - 448),  781),
-    ("Empire State Building",           (40.7483735, -73.985603),   (556, 907 - 158), 1068),
-#    ("Thin skyscraper",                 (40.7650619, -73.9773295),  (592, 907 - 62),  1078), # Probably wrong on map
-    ("Freedom Tower",                   (40.7131094, -74.0130809),  (435, 907 - 363), 1251),
-    ("Green roof",                      (40.7109769, -74.0034396),  (451, 907 - 398), 1555),
+    ("High building on the very left",  (40.71357339189967, -74.04457939331341),  (297, 907 - 360),  163),
+    ("Ellis Island West",               (40.698034419784015, -74.04355919100264),   (302, 907 - 451),  298),
+    ("Big building on the left",        (40.713005039978285, -74.03381594560251),  (345, 907 - 363),  617),
+    ("Ellis Island Tip of Triangle",    (40.69837141372243, -74.0382265425586),  (325, 907 - 448),  781),
+    ("Empire State Building",           (40.74843545565188, -73.985665002613),   (556, 907 - 158), 1068),
+    #("Thin skyscraper",                 (40.76637621595767, -73.98078036629533),  (592, 907 - 62),  1078), # To be fixed or removed.
+    ("Freedom Tower",                   (40.71299406191319, -74.01316988147168),  (435, 907 - 363), 1251),
+    ("Green roof",                      (40.70697390854156, -74.00967594592247),  (451, 907 - 398), 1555),
 ]
 
 # Do not touch that!
