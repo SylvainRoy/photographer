@@ -7,6 +7,7 @@ Algorithm to locate the photographer.
 from collections import namedtuple
 from math import fabs, sqrt
 
+import utm
 from scipy.optimize import minimize
 
 from tools import barycenter, distance, intersection_lines, photographer_area
@@ -119,10 +120,9 @@ PhotographerPosition = namedtuple('PhotographerPosition', ["photographer", "erro
 
 def find_photograper(summits, projections, init=None):
     """
-    Position the photographer where the picture was taken.
+    Retrieve the position of the photographer.
     Input:
-    - dimensions: (x, y) dimensions of the map
-    - summits: list of summits with their (x, y) coordinates on the map
+    - summits: list of (x, y) coordinates of the summits on the map
     - projections: distance of the projections of the summits from the left of the picture
     - init: an optional initial position for the search 
     Output:
@@ -152,6 +152,43 @@ def find_photograper(summits, projections, init=None):
         method="Nelder-Mead"
     )
     return PhotographerPosition(photographer=res.x, error=res.fun, path=path)
+
+
+def find_photograper_wsg84(latlngs, projections, init=None):
+    """
+    Retrieve the position of the photographer.
+    Input:
+    - summits: list of (lat, lng) coordinates (WSG84) of the summits on the map
+    - projections: distance of the projections of the summits from the left of the picture
+    - init: an optional initial position for the search 
+    Output:
+    - The photographer position
+    - The error at the photographer position
+    - The optimisation path
+    """
+    # Convert data from WSG84 to UTM.
+    utmdata = [utm.from_latlon(p[0], p[1]) for p in latlngs]
+    utmsummits = [(p[0], p[1]) for p in utmdata]
+    if init is not None:
+        initdata = utm.from_latlon(init[0], init[1])
+        utmdata.append(initdata)
+        init = (initdata[0], initdata[1])
+    # Save UTM zone/letter (and check if it's all in the same zone).
+    zone_numbers = set([d[2] for d in utmdata])
+    zone_letters = set([d[3] for d in utmdata])
+    if len(zone_numbers) != 1 or len(zone_letters) != 1:
+        raise("The summits/init are spread over several UTM zones!")
+    zone_number = zone_numbers.pop()
+    zone_letter = zone_letters.pop()
+    # Run the optimizer to find the photograper
+    utmphotographer, error, utmpath = find_photograper(utmsummits, projections, init) 
+    # Convert back to WSG84
+    photographer = utm.to_latlon(utmphotographer[0], utmphotographer[1], zone_number, zone_letter)
+    path = [
+        utm.to_latlon(p[0], p[1], zone_number, zone_letter)
+        for p in utmpath
+    ]
+    return PhotographerPosition(photographer=photographer, error=error, path=path)
 
 
 def run(map, summits, projections):
