@@ -10,19 +10,19 @@
     <!-- Image style -->
     <style>
 
-        .image-input {
+        .center {
             width: 80%;
             margin-left: auto;
             margin-right: auto;
         }
 
         .image-preview {
-            width: 80%;
+            /* width: 80%; */
             min-height: 100px;
             border: 2px solid #dddddd;
             margin-top: 15px;
-            margin-left: auto;
-            margin-right: auto;
+            /* margin-left: auto; */
+            /* margin-right: auto; */
 
             /* Default text */
             display: flex;
@@ -61,48 +61,45 @@
 <body>
     <center><h1>Where was the photographer?</h1></center>
 
-    <h2>Introduction</h2>
-    <p>
+    <h2 class="center">Introduction</h2>
+    <p class="center">
         This small tool helps you find the location from which a picture has been taken.
         All you need to know is a few points on the picture that you can locate on a map.
         If you are not sure what to do, set the <a href="#" onclick="demo()">demo</a> and then click on the "Locate" button at the very bottom.
     </p>
 
-    <h2>Step 1:</h2>
-    <p>Load the photo and indicate at least 3 points that you can locate on the map. Please be as acurate as possible. Only the tip of the arrows matter.</p>
-    <div class="image-input"><input type="file" name="inpfile" id="inpFile"></div>
-    <div class="image-preview" id="imagePreview">
+    <h2 class="center">Step 1:</h2>
+    <p class="center">Load the photo and indicate at least 3 points that you can locate on the map. Please be as acurate as possible. Only the tip of the arrows matter.</p>
+    <div class="center image-input"><input type="file" name="inpfile" id="inpFile"></div>
+    <div class="center image-preview" id="imagePreview">
         <img src="" alt="Image Preview" class="image-preview__image" id="imageImg" onclick="showMarkerArea(this);">
         <span class="image-preview__default-text">Image Preview</span>
     </div>
     
-    <h2>Step 2:</h2>
-    <p>Locate the same points on the map below. Watch out, they MUST come in the same order of the points of picture (from left to right).</p>
+    <h2 class="center">Step 2:</h2>
+    <p class="center">Locate the same points on the map below. Watch out, they MUST come in the same order (from left to right) than the points on the picture.</p>
     <div id="map"></div>
 
-    <h2>Step 3:</h2>
-    <p>well... Just click! A new marker will appear on the map to indicate the computed location of the photographer.</p>
-    <div class="image-input"><button onclick="locatePhotographer()">Locate</button></div>
+    <h2 class="center">Step 3:</h2>
+    <p class="center">well... Just click! A new marker will appear on the map to indicate the computed location of the photographer.</p>
+    <div  class="center"><button onclick="locatePhotographer()">Locate</button></div>
 
-    <h2>Privacy?</h2>
-    <p>
+    <h2 class="center">About this tool</h2>
+    <p class="center">
         Worried about privacy? Only the coordinates of the points on the picture (x, y) and on the map (latitude, longitude) are sent to the server.
         The picture never leaves your browser.
         The server doesn't store any information.
     </p>
-
-    <h2>Code</h2>
-    <p>
+    <p class="center">
         This is an open source toy project.
         The code can be found on GitHub. TODO
         The server (which computes the location of the photographer) provides a JSon API that can be called directly.
         Just check what your browser is doing in the background to find out.
     </p>
-
-    <h2>UI Design</h2>
-    <p>
+    <p class="center">
         Nope... I am definitively not a UX expert...
     </p>
+    <p class="center">This tool comes with no guarantee.</p>
 
 
     <!-- Loading and marking the picture -->
@@ -268,6 +265,7 @@
 
     <!-- Demo -->
     <script>
+        // Set up the demo
         function demo() {
             // Load init picture
             previewDefaultText.style.display = "none";
@@ -288,6 +286,7 @@
             latlngs.forEach(point => {
                 addMarker(point, map)
             });
+            map.setCenter({lat: 45.90302924721127, lng:6.91997786083133})
         };
     </script>
 
