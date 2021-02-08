@@ -27,8 +27,6 @@ Understand how it works:
 ## Todo
 
  - the whole thing should run in a docker
- - scoring mechanism to rank optimizers
-    - other optimization mimimization (e.g. x^3)
  - better handling of situation where the optimization get out of the acceptable zone
  - test accuracy with only three points
  - remove dead code.

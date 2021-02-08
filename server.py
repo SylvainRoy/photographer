@@ -18,7 +18,6 @@ from optimizer import find_photograper_wsg84
 
 app = FastAPI()
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
 
 class Locate(BaseModel):
     projections: List[float] = []
@@ -34,3 +33,6 @@ async def locate(query: Locate):
         reply = {"status": str(e)}
     print("locate request {} => {}".format(query, reply))
     return reply
+ 
+
+app.mount("/", StaticFiles(directory="static"), name="static")
