@@ -26,9 +26,6 @@ Understand how it works:
 
 ## Todo
 
- - the solver doesn't work anymore for statueofliberty. The initial position lead to a wrong local optimum.
- - the solver should provide a JSON api
- - the solver should provider a web UI
  - the whole thing should run in a docker
  - scoring mechanism to rank optimizers
     - other optimization mimimization (e.g. x^3)
@@ -36,33 +33,3 @@ Understand how it works:
  - test accuracy with only three points
  - remove dead code.
 
-## Notes
-
-### JSON
-
-write:
-  JSON.stringify({"action":"status", "switch":"west"})
-
-read:
-  var arr = JSON.parse(response);
-
-
-## Notes on the API
-
-{
-  projections: [123, 456, ...],
-  latlng: [
-    [45.123, 7.456],
-    [47.123, 14.456],
-    ...
-  ]
-}
-
-{
-  projections: [123, 456, ...],
-  coord: [
-    [45.123, 7.456],
-    [47.123, 14.456],
-    ...
-  ]
-}

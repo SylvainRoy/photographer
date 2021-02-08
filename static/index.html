@@ -9,8 +9,15 @@
 
     <!-- Image style -->
     <style>
+
+        .image-input {
+            width: 80%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
         .image-preview {
-            width: 96%;
+            width: 80%;
             min-height: 100px;
             border: 2px solid #dddddd;
             margin-top: 15px;
@@ -36,8 +43,8 @@
         /* Always set the map height explicitly to define the size of the div
         * element that contains the map. */
         #map {
-            height: 90%;
-            width: 96%;
+            height: 60%;
+            width: 80%;
             margin-left: auto;
             margin-right: auto;
         }
@@ -52,23 +59,50 @@
 
 </head>
 <body>
-    <h1>Where was the photographer?</h1>
+    <center><h1>Where was the photographer?</h1></center>
+
+    <h2>Introduction</h2>
+    <p>
+        This small tool helps you find the location from which a picture has been taken.
+        All you need to know is a few points on the picture that you can locate on a map.
+        If you are not sure what to do, set the <a href="#" onclick="demo()">demo</a> and then click on the "Locate" button at the very bottom.
+    </p>
 
     <h2>Step 1:</h2>
-    <p>Load the photo and indicate at least 3 points that you can locate on the map.</p>
-    <input type="file" name="inpfile" id="inpFile">
+    <p>Load the photo and indicate at least 3 points that you can locate on the map. Please be as acurate as possible. Only the tip of the arrows matter.</p>
+    <div class="image-input"><input type="file" name="inpfile" id="inpFile"></div>
     <div class="image-preview" id="imagePreview">
-        <img src="" alt="Image Preview" class="image-preview__image" onclick="showMarkerArea(this);">
+        <img src="" alt="Image Preview" class="image-preview__image" id="imageImg" onclick="showMarkerArea(this);">
         <span class="image-preview__default-text">Image Preview</span>
     </div>
     
     <h2>Step 2:</h2>
-    <p>Locate the same points on the map below.</p>
+    <p>Locate the same points on the map below. Watch out, they MUST come in the same order of the points of picture (from left to right).</p>
     <div id="map"></div>
 
     <h2>Step 3:</h2>
-    <p>well... Just click!</p>
-    <button onclick="locatePhotographer()">Locate</button>
+    <p>well... Just click! A new marker will appear on the map to indicate the computed location of the photographer.</p>
+    <div class="image-input"><button onclick="locatePhotographer()">Locate</button></div>
+
+    <h2>Privacy?</h2>
+    <p>
+        Worried about privacy? Only the coordinates of the points on the picture (x, y) and on the map (latitude, longitude) are sent to the server.
+        The picture never leaves your browser.
+        The server doesn't store any information.
+    </p>
+
+    <h2>Code</h2>
+    <p>
+        This is an open source toy project.
+        The code can be found on GitHub. TODO
+        The server (which computes the location of the photographer) provides a JSon API that can be called directly.
+        Just check what your browser is doing in the background to find out.
+    </p>
+
+    <h2>UI Design</h2>
+    <p>
+        Nope... I am definitively not a UX expert...
+    </p>
 
 
     <!-- Loading and marking the picture -->
@@ -90,7 +124,7 @@
                 previewImage.style.display = "block";
                 reader.addEventListener("load", function() {
                     previewImage.setAttribute("src", this.result);
-                    showMarkerArea(previewImage);
+                    // showMarkerArea(previewImage);
                 });
                 reader.readAsDataURL(file);
             } else {
@@ -104,12 +138,14 @@
          * Set up the picture editor
          */
 
-        markerArea = null;
+        var markerArea = null;
 
         // Show the marker tool on the picture
         function showMarkerArea(target) {
-            markerArea = new markerjs2.MarkerArea(target);
-            // markerArea.settings.displayMode = 'popup';
+            if (markerArea == null) {
+                markerArea = new markerjs2.MarkerArea(target);
+            }
+            markerArea.settings.displayMode = 'popup';
             markerArea.availableMarkerTypes = [markerjs2.ArrowMarker];
             markerArea.addRenderEventListener((imgURL) => target.src = imgURL);
             markerArea.show();
@@ -146,6 +182,15 @@
                 draggable:true,
                 map: map,
             });
+            // Right click on marker deletes it.
+            marker.addListener("contextmenu", function(event) {
+                m = this;
+                markers = markers.filter(function(item) {
+                    return item !== m;
+                });
+                this.setMap(null);
+            });
+            // Register marker.
             markers.push(marker);
         }
     </script>
@@ -204,11 +249,44 @@
                     draggable:false,
                     map: map,
                 });
+                // Right click on marker deletes it.
+                marker.addListener("contextmenu", function(event) {
+                    m = this;
+                    markers = markers.filter(function(item) {
+                        return item !== m;
+                    });
+                    this.setMap(null);
+                });
                 // Center on photographer.
                 map.setCenter(loc)
             })
             .catch((error) => {
                 console.error('Error:', error);
+            });
+        };
+    </script>
+
+    <!-- Demo -->
+    <script>
+        function demo() {
+            // Load init picture
+            previewDefaultText.style.display = "none";
+            previewImage.style.display = "block";
+            previewImage.setAttribute("src", "./picture.png");
+            showMarkerArea(previewImage);
+            // Add the markers on the picture
+            // That is, restore a state saved previously with 'JSON.stringify(markerArea.getState())'
+            markerArea.restoreState(JSON.parse('{"width":912,"height":604,"markers":[{"arrowType":"end","strokeColor":"#EF4444","strokeWidth":3,"strokeDasharray":"","x1":197.6015625,"y1":143.33203125,"x2":197.859375,"y2":172.91796875,"typeName":"ArrowMarker","state":"select"},{"arrowType":"end","strokeColor":"#EF4444","strokeWidth":3,"strokeDasharray":"","x1":292.7890625,"y1":144.32421875,"x2":289.0703125,"y2":181.28125,"typeName":"ArrowMarker","state":"select"},{"arrowType":"end","strokeColor":"#EF4444","strokeWidth":3,"strokeDasharray":"","x1":402.12890625,"y1":142.79296875,"x2":402.765625,"y2":182.59765625,"typeName":"ArrowMarker","state":"select"},{"arrowType":"end","strokeColor":"#EF4444","strokeWidth":3,"strokeDasharray":"","x1":578.0703125,"y1":134.59375,"x2":577.75,"y2":148.55078125,"typeName":"ArrowMarker","state":"select"},{"arrowType":"end","strokeColor":"#EF4444","strokeWidth":3,"strokeDasharray":"","x1":744.32421875,"y1":134.8359375,"x2":743.34765625,"y2":157.19140625,"typeName":"ArrowMarker","state":"select"}]}'));
+            markerArea.render().then((imgURL) => document.getElementById("imageImg").src = imgURL)
+            markerArea.close();
+            // Add the markers on the map
+            latlngs=[{lat: 45.91706381072691, lng: 7.02477006732424},
+                     {lat: 45.90008131460168, lng: 7.004044893341246},
+                     {lat: 45.88759634304873, lng: 7.00697747168141},
+                     {lat: 45.86892320027275, lng: 6.98800888952809},
+                     {lat: 45.86237864638254, lng: 6.951874169679457}];
+            latlngs.forEach(point => {
+                addMarker(point, map)
             });
         };
     </script>
