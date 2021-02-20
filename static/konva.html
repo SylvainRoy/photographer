@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="https://unpkg.com/konva@7.2.3/konva.min.js"></script>
+    <meta charset="utf-8" />
+    <title>Konva Drag and Drop Demo</title>
+    <style>
+      /* 
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background-color: #f0f0f0;
+      }
+      */
+
+      #container {
+        border-style: solid;
+        border-color: coral;
+
+      }
+    </style>
+  </head>
+  <body>
+
+    <!-- 
+    To do:
+
+      - Markers should only appear in teh picture.
+        - Add the code to load the picture live
+        - remove all
+     
+    -->
+
+
+    <h1>Title</h1>
+    <div id="container">totot</div>
+
+    <script>
+
+        // Detect click on the picture
+
+        var mouseovermarker = false;
+
+        document.getElementById("container").addEventListener('click', onMouseUpdate, false);
+        function onMouseUpdate(e) {
+            if (!mouseovermarker) {
+                x = e.offsetX;
+                y = e.offsetY;
+                addPictureMarker(x, y, `(${x}, ${y})`);
+            };
+        };
+
+        // Define the drawing area for the picture & markers
+        var width = window.innerWidth;
+        var height = window.innerHeight;
+        //var width = document.getElementById('container').clientWidth;
+        //var height = document.getElementById('container').clientHeight;
+        var stage = new Konva.Stage({
+            container: 'container',
+            width: width,
+            height: height,
+        });
+        var layer = new Konva.Layer();
+        stage.add(layer);
+
+        // Add a marker on the picture
+        function addPictureMarker(x, y, text) {
+            console.log(`pictureMarker: ${x} / ${stage.width()}, ${y} / ${stage.height()}`)
+            var tooltip = new Konva.Label({
+                x: x,
+                y: y,
+                opacity: 0.75,
+                draggable: true,
+            });
+            tooltip.add(
+                new Konva.Tag({
+                    fill: 'black',
+                    pointerDirection: 'down',
+                    pointerWidth: 10,
+                    pointerHeight: 30,
+                })
+            );
+            tooltip.add(
+                new Konva.Text({
+                    text: text,
+                    fontFamily: 'Calibri',
+                    fontSize: 18,
+                    padding: 5,
+                    fill: 'white',
+                })
+            );
+            // add cursor styling and detect mouse over marker
+            tooltip.on('mouseover', function () {
+                document.body.style.cursor = 'pointer';
+                mouseovermarker = true;
+            });
+            tooltip.on('mouseout', function () {
+                document.body.style.cursor = 'default';
+                mouseovermarker = false;
+            });
+            // Draw the marker
+            layer.add(tooltip);
+            layer.draw();
+            return tooltip;
+        };
+
+        function removePictureMarker(marker) {
+            marker.destroy();
+            layer.draw();
+        };
+
+    </script>
+
+
+  </body>
+</html>
