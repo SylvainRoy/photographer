@@ -5,32 +5,20 @@
     <meta charset="utf-8" />
     <title>Konva Drag and Drop Demo</title>
     <style>
-      /* 
       body {
-        margin: 0;
+        /* margin: 0;
         padding: 0;
-        overflow: hidden;
+        overflow: hidden;*/
         background-color: #f0f0f0;
       }
-      */
 
       #container {
         border-style: solid;
-        border-color: coral;
+        /* border-color: coral; */
       }
     </style>
   </head>
   <body>
-
-    <!-- 
-    To do:
-
-      - Markers should only appear in teh picture.
-        - Add the code to load the picture live
-        - remove all
-     
-    -->
-
 
     <h1>Title</h1>
 
@@ -51,7 +39,7 @@
       var stage = new Konva.Stage({
         container: 'container',
         width: container.clientWidth,
-        height: 100, //container.clientHeight,
+        height: 100,
       });
       var picLayer = new Konva.Layer();
       var markerLayer = new Konva.Layer();
@@ -63,40 +51,42 @@
       //
       const inpFile = document.getElementById("inpFile");
       inpFile.addEventListener("change", function() {
+        // Remove any marker left
+        markerLayer.destroyChildren();
+        markerLayer.draw();
+        // Load picture
         const file = this.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.addEventListener("load", function() {
-            Konva.Image.fromURL(this.result, function (pic) {
-              // Update dimension of the picture area
-              stage.width(container.clientWidth);
-              stage.height(container.clientWidth * pic.height() / pic.width());
-              // Load picture in background
-              pic.setAttrs({
-                x: 0,
-                y: 0,
-                width: stage.width(),
-                height: stage.height(),
-              });
-              picLayer.add(pic);
-              picLayer.draw();
+        if (!file) {
+          return; // The user canceled
+        }
+        const reader = new FileReader();
+        reader.addEventListener("load", function() {
+          Konva.Image.fromURL(this.result, function (pic) {
+            // Update dimension of the picture area
+            stage.width(container.clientWidth);
+            stage.height(container.clientWidth * pic.height() / pic.width());
+            // Load picture in background
+            pic.setAttrs({
+              x: 0,
+              y: 0,
+              width: stage.width(),
+              height: stage.height(),
             });
+            picLayer.add(pic);
+            picLayer.draw();
           });
-          reader.readAsDataURL(file);
-        } else {
-          // todo: No image selected, clean up...
-          // - all markers to be erased
-        };
+        });
+        reader.readAsDataURL(file);
       });      
       
       //
       // Detect left click on the picture to add a marker
       //      
       stage.on('click', function(e) {
-        if (e.target === stage && e.evt.button == 0) {
-          x = e.target.pointerPos.x;
-          y = e.target.pointerPos.y;
-          addPictureMarker(x, y, `(${x}, ${y})`);
+        if (e.target.className == "Image" && e.evt.button == 0) {
+          x = e.evt.layerX;
+          y = e.evt.layerY;
+          addPictureMarker(x, y);
         }
       });
 
@@ -106,10 +96,10 @@
       stage.on('contextmenu', function (e) {
         // prevent default behavior
         e.evt.preventDefault();
-        if (e.target === stage) {
+        if (e.target === stage || e.target.className == "Image") {
           return;
         };
-        // move up in the hierarchy to find the parent label element (rather than just the text)
+        // move up in the hierarchy to (possibly) find a label element (rather than one of its subelement)
         curTarget = e.target;
         while (curTarget.className != "Label") {
           if (!curTarget.parent) {
@@ -123,7 +113,7 @@
       //
       // Add a marker on the picture
       //
-      function addPictureMarker(x, y, text) {
+      function addPictureMarker(x, y) {
         console.log(`pictureMarker: ${x} / ${stage.width()}, ${y} / ${stage.height()}`)
         var tooltip = new Konva.Label({
           x: x,
@@ -135,13 +125,13 @@
           new Konva.Tag({
             fill: 'black',
             pointerDirection: 'down',
-            pointerWidth: 10,
-            pointerHeight: 30,
+            pointerWidth: 18,
+            pointerHeight: 20,
           })
         );
         tooltip.add(
           new Konva.Text({
-            text: text,
+            text: "?",
             fontFamily: 'Calibri',
             fontSize: 18,
             padding: 5,
@@ -157,6 +147,7 @@
         });
         // Draw the marker
         markerLayer.add(tooltip);
+        renameMarkers();
         markerLayer.draw();
         return tooltip;
       };
@@ -166,9 +157,26 @@
       //
       function removePictureMarker(marker) {
         marker.destroy();
+        renameMarkers();
         markerLayer.draw();
       };
       
+      //
+      // Rename all markers from left to rigth
+      //
+      function renameMarkers() {
+        let i = 0;
+        let letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        markers = markerLayer.getChildren().slice(0);
+        markers.sort(function (a, b) {
+          return a.getPosition().x - b.getPosition().x;
+        }).forEach(marker => {
+          if (marker.getText()) {
+            marker.getText().text(letters[i++]);
+          };
+        });
+      };
+
     </script>
 
 
