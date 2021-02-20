@@ -17,7 +17,6 @@
       #container {
         border-style: solid;
         border-color: coral;
-
       }
     </style>
   </head>
@@ -34,14 +33,48 @@
 
 
     <h1>Title</h1>
-    <div id="container">totot</div>
 
+    <input type="file" name="inpfile" id="inpFile">
+    <div id="container"></div>
+    
+
+    <!-- Loading the picture -->
+    <script>     
+      const inpFile = document.getElementById("inpFile");
+
+      inpFile.addEventListener("change", function() {
+          const file = this.files[0];
+          if (file) {
+              const reader = new FileReader();
+              reader.addEventListener("load", function() {
+                  Konva.Image.fromURL(this.result, function (pic) {
+                      container = document.getElementById("container");
+                      pic.setAttrs({
+                          x: 0,
+                          y: 0,
+                          width: container.clientWidth,
+                          //height: container.clientHeight,
+                      });
+                      layer.add(pic);
+                      layer.batchDraw();
+                  });
+              });
+              reader.readAsDataURL(file);
+          } else {
+              // No image selected, clean up...
+          };
+      });
+    </script>
+
+    <!-- Marking the picture -->
     <script>
 
-        // Detect click on the picture
 
         var mouseovermarker = false;
+        var stage;
+        var layer;
 
+        // Add a marker when picture clicked
         document.getElementById("container").addEventListener('click', onMouseUpdate, false);
         function onMouseUpdate(e) {
             if (!mouseovermarker) {
@@ -54,15 +87,16 @@
         // Define the drawing area for the picture & markers
         var width = window.innerWidth;
         var height = window.innerHeight;
-        //var width = document.getElementById('container').clientWidth;
+        //var width = document.getElementById('container80').clientWidth;
         //var height = document.getElementById('container').clientHeight;
-        var stage = new Konva.Stage({
+        stage = new Konva.Stage({
             container: 'container',
             width: width,
             height: height,
         });
-        var layer = new Konva.Layer();
+        layer = new Konva.Layer();
         stage.add(layer);
+
 
         // Add a marker on the picture
         function addPictureMarker(x, y, text) {
