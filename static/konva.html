@@ -47,9 +47,6 @@
       //
       // Set up the picture viewer/marker
       //
-      var mouseovermarker = false;
-      //var width = window.innerWidth;
-      //var height = window.innerHeight;
       var container = document.getElementById('container');
       var stage = new Konva.Stage({
         container: 'container',
@@ -93,17 +90,36 @@
       });      
       
       //
-      // Detect click on the picture to add a marker
-      //
-      document.getElementById("container").addEventListener('click', onMouseUpdate, false);
-      function onMouseUpdate(e) {
-        if (!mouseovermarker) {
-          x = e.offsetX;
-          y = e.offsetY;
+      // Detect left click on the picture to add a marker
+      //      
+      stage.on('click', function(e) {
+        if (e.target === stage && e.evt.button == 0) {
+          x = e.target.pointerPos.x;
+          y = e.target.pointerPos.y;
           addPictureMarker(x, y, `(${x}, ${y})`);
+        }
+      });
+
+      //
+      // Detect right click on the picture to delete a marker
+      //
+      stage.on('contextmenu', function (e) {
+        // prevent default behavior
+        e.evt.preventDefault();
+        if (e.target === stage) {
+          return;
         };
-      };      
-      
+        // move up in the hierarchy to find the parent label element (rather than just the text)
+        curTarget = e.target;
+        while (curTarget.className != "Label") {
+          if (!curTarget.parent) {
+            return;
+          }
+          curTarget = curTarget.parent;
+        }
+        removePictureMarker(curTarget);
+      });
+
       //
       // Add a marker on the picture
       //
@@ -135,11 +151,9 @@
         // add cursor styling and detect mouse over marker
         tooltip.on('mouseover', function () {
           document.body.style.cursor = 'pointer';
-          mouseovermarker = true;
         });
         tooltip.on('mouseout', function () {
           document.body.style.cursor = 'default';
-          mouseovermarker = false;
         });
         // Draw the marker
         markerLayer.add(tooltip);
@@ -152,7 +166,7 @@
       //
       function removePictureMarker(marker) {
         marker.destroy();
-        layer.draw();
+        markerLayer.draw();
       };
       
     </script>
