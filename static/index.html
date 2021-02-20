@@ -1,293 +1,362 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <title>Photographer</title>
-    
+  <head>
+    <title>Konva Drag and Drop Demo</title>
+
     <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
-    <script src="https://unpkg.com/markerjs2/markerjs2.js"></script>
+    <script src="https://unpkg.com/konva@7.2.3/konva.min.js"></script>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBO537xsIPtelBtuGlhnx7PmaW_nIjSwyc&callback=initMap&libraries=&v=weekly" defer></script>
 
-    <!-- Image style -->
-    <style>
+    <meta charset="utf-8" />
 
-        .center {
-            width: 80%;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .image-preview {
-            /* width: 80%; */
-            min-height: 100px;
-            border: 2px solid #dddddd;
-            margin-top: 15px;
-            /* margin-left: auto; */
-            /* margin-right: auto; */
-
-            /* Default text */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            color: #cccccc;
-        }
-
-        .image-preview__image {
-            display: none;
-            width: 100%;
-        }
-    </style>
-
-    <!-- Map style -->
     <style type="text/css">
-        /* Always set the map height explicitly to define the size of the div
-        * element that contains the map. */
-        #map {
-            height: 60%;
-            width: 80%;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        /* Optional: Makes the sample page fill the window. */
-        html,
-        body {
-            height: 90%;
-            margin: 0;
-            padding: 0;
-        }
-    </style>
 
-</head>
-<body>
+      #container {
+        border-style: solid;
+        width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      #map {
+          height: 60%;
+          width: 100%;
+          margin-left: auto;
+          margin-right: auto;
+          border-style: solid;
+      }
+
+      html,
+      body {
+          height: 90%;
+          background-color: #f0f0f0;
+          /* margin: 0; */
+          /* padding: 0; */
+      }
+
+    </style>
+  </head>
+  <body>
+
     <center><h1>Where was the photographer?</h1></center>
 
-    <h2 class="center">Introduction</h2>
-    <p class="center">
+    <h2>Introduction</h2>
+    <p>
         This small tool helps you find the location from which a picture has been taken.
         All you need to know is a few points on the picture that you can locate on a map.
         If you are not sure what to do, set the <a href="#" onclick="demo()">demo</a> and then click on the "Locate" button at the very bottom.
     </p>
 
-    <h2 class="center">Step 1:</h2>
-    <p class="center">Load the photo and indicate at least 3 points that you can locate on the map. Please be as acurate as possible. Only the tip of the arrows matter.</p>
-    <div class="center image-input"><input type="file" name="inpfile" id="inpFile"></div>
-    <div class="center image-preview" id="imagePreview">
-        <img src="" alt="Image Preview" class="image-preview__image" id="imageImg" onclick="showMarkerArea(this);">
-        <span class="image-preview__default-text">Image Preview</span>
-    </div>
+    <h2>Step 1 - Load an image and mark known locations</h2>
+    <p>Select a photo and locate at least 3 points that you can locate on the map. Please be as acurate as possible!</p>
+    <input type="file" name="inpfile" id="inpFile">
+    <div id="container"></div>
     
-    <h2 class="center">Step 2:</h2>
-    <p class="center">Locate the same points on the map below. Watch out, they MUST come in the same order (from left to right) than the points on the picture.</p>
+    <h2>Step 2 - Mark same known locations on the map</h2>
+    <p>Locate the same points on the map below.</p>
     <div id="map"></div>
 
-    <h2 class="center">Step 3:</h2>
-    <p class="center">well... Just click! A new marker will appear on the map to indicate the computed location of the photographer.</p>
-    <div  class="center"><button onclick="locatePhotographer()">Locate</button></div>
+    <h2>Step 3:</h2>
+    <p>well... Just click! A new marker will appear on the map to indicate the computed location of the photographer.</p>
+    <div ><button onclick="locatePhotographer()">Locate</button></div>
 
-    <h2 class="center">About this tool</h2>
-    <p class="center">
+    <h2>About this tool</h2>
+    <p>
         Worried about privacy? Only the coordinates of the points on the picture (x, y) and on the map (latitude, longitude) are sent to the server.
         The picture never leaves your browser.
     </p>
-    <p class="center">
+    <p>
         This is an open source toy project.
         The code can be found on GitHub. TODO
         The server (which computes the location of the photographer) provides a JSon API that can be called directly.
         Just check what your browser is doing in the background to find out.
     </p>
-    <p class="center">
+    <p>
         Nope... I am definitively not a UX expert...
     </p>
-    <p class="center">This tool comes with no guarantee.</p>
+    <p>This tool comes with no guarantee.</p>
 
 
     <!-- Loading and marking the picture -->
-    <script>
-        /*
-         *  Load and preview the picture
-         */
-        
-        const inpFile = document.getElementById("inpFile");
-        const previewContainer = document.getElementById("imagePreview");
-        const previewImage = previewContainer.querySelector(".image-preview__image");       
-        const previewDefaultText = previewContainer.querySelector(".image-preview__default-text");
+    <script>     
+      
+      //
+      // Set up the picture viewer/marker
+      //
+      var container = document.getElementById('container');
+      var stage = new Konva.Stage({
+        container: 'container',
+        width: container.clientWidth,
+        height: 100,
+      });
+      var picLayer = new Konva.Layer();
+      var markerLayer = new Konva.Layer();
+      stage.add(picLayer);
+      stage.add(markerLayer);
 
-        inpFile.addEventListener("change", function() {
-            const file = this.files[0];
-            if (file) {
-                const reader = new FileReader();
-                previewDefaultText.style.display = "none";
-                previewImage.style.display = "block";
-                reader.addEventListener("load", function() {
-                    previewImage.setAttribute("src", this.result);
-                    // showMarkerArea(previewImage);
-                });
-                reader.readAsDataURL(file);
-            } else {
-                previewDefaultText.style.display = null;
-                previewImage.style.display = null;
-                previewImage.setAttribute("src", null);
-            }
+      //
+      // Let the user load a picture in the marking area.
+      //
+      const inpFile = document.getElementById("inpFile");
+      inpFile.addEventListener("change", function() {
+        // Remove any marker left
+        markerLayer.destroyChildren();
+        markerLayer.draw();
+        // Load picture
+        const file = this.files[0];
+        if (!file) {
+          return; // The user canceled
+        }
+        const reader = new FileReader();
+        reader.addEventListener("load", function() {
+          Konva.Image.fromURL(this.result, function (pic) {
+            // Update dimension of the picture area
+            stage.width(container.clientWidth);
+            stage.height(container.clientWidth * pic.height() / pic.width());
+            // Load picture in background
+            pic.setAttrs({
+              x: 0,
+              y: 0,
+              width: stage.width(),
+              height: stage.height(),
+            });
+            picLayer.add(pic);
+            picLayer.draw();
+          });
         });
+        reader.readAsDataURL(file);
+      });      
+      
+      //
+      // Detect left click on the picture to add a marker
+      //      
+      stage.on('click', function(e) {
+        if (e.target.className == "Image" && e.evt.button == 0) {
+          x = e.evt.layerX;
+          y = e.evt.layerY;
+          addPictureMarker(x, y);
+        }
+      });
 
-        /*
-         * Set up the picture editor
-         */
-
-        var markerArea = null;
-
-        // Show the marker tool on the picture
-        function showMarkerArea(target) {
-            if (markerArea == null) {
-                markerArea = new markerjs2.MarkerArea(target);
-            }
-            markerArea.settings.displayMode = 'popup';
-            markerArea.availableMarkerTypes = [markerjs2.ArrowMarker];
-            markerArea.addRenderEventListener((imgURL) => target.src = imgURL);
-            markerArea.show();
+      //
+      // Detect right click on the picture to delete a marker
+      //
+      stage.on('contextmenu', function (e) {
+        // prevent default behavior
+        e.evt.preventDefault();
+        if (e.target === stage || e.target.className == "Image") {
+          return;
         };
+        // move up in the hierarchy to (possibly) find a label element (rather than one of its subelement)
+        curTarget = e.target;
+        while (curTarget.className != "Label") {
+          if (!curTarget.parent) {
+            return;
+          }
+          curTarget = curTarget.parent;
+        }
+        removePictureMarker(curTarget);
+      });
+
+      //
+      // Add a marker on the picture
+      //
+      function addPictureMarker(x, y) {
+        console.log(`pictureMarker: ${x} / ${stage.width()}, ${y} / ${stage.height()}`)
+        var tooltip = new Konva.Label({
+          x: x,
+          y: y,
+          opacity: 0.75,
+          draggable: true,
+        });
+        tooltip.add(
+          new Konva.Tag({
+            fill: 'black',
+            pointerDirection: 'down',
+            pointerWidth: 18,
+            pointerHeight: 20,
+          })
+        );
+        tooltip.add(
+          new Konva.Text({
+            text: "?",
+            fontFamily: 'Calibri',
+            fontSize: 18,
+            padding: 5,
+            fill: 'white',
+          })
+        );
+        // add cursor styling and detect mouse over marker
+        tooltip.on('mouseover', function () {
+          document.body.style.cursor = 'pointer';
+        });
+        tooltip.on('mouseout', function () {
+          document.body.style.cursor = 'default';
+        });
+        // Draw the marker
+        markerLayer.add(tooltip);
+        renamePictureMarkers();
+        markerLayer.draw();
+        return tooltip;
+      };
+      
+      //
+      // Remove a marker from the picture
+      //
+      function removePictureMarker(marker) {
+        marker.destroy();
+        renamePictureMarkers();
+        markerLayer.draw();
+      };
+      
+      //
+      // Rename all markers from left to rigth
+      //
+      function renamePictureMarkers() {
+        let i = 0;
+        const labels = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        markerLayer.getChildren().slice(0).sort(function (a, b) {
+          return a.getPosition().x - b.getPosition().x;
+        }).forEach(marker => {
+          if (marker.getText()) {
+            marker.getText().text(labels[i++]);
+          };
+        });
+      };
+
     </script>
 
     <!-- Loading and marking the map -->
     <script>
-        var map;
-        var markers = []; // the list of markers added on the map
+      var map;
+      var mapMarkers = []; // the list of markers added on the map
+            
+      //
+      // Init the map
+      //
+      function initMap() {
+        map = new google.maps.Map(document.getElementById("map"), {
+          zoom: 12,
+          center: { lat: 45.83550785027975, lng: 6.863880441774906 },
+        });
+        // Add a marker when the map is clicked.
+        google.maps.event.addListener(map, "click", (event) => {
+          addMarker(event.latLng, map);
+        });
+      }
+      
+      //
+      // Adds a marker to the map.
+      //
+      function addMarker(location, map) {
+        var marker = new google.maps.Marker({
+          position: location,
+          label: "Z",
+          draggable:true,
+          map: map,
+        });
+        // Right click on marker deletes it.
+        marker.addListener("contextmenu", function(event) {
+          m = this;
+          mapMarkers = mapMarkers.filter(function(item) {
+            return item !== m;
+          });
+          this.setMap(null);
+          renameMapMarkers();
+        });
+        // Register marker.
+        mapMarkers.push(marker);
+        // Ensure they are named in contiguous alpha order
+        renameMapMarkers();
+      }
 
-        // Markers appear when the user clicks on the map.
-        // Each marker is labeled with a single alphabetical character.
+      //
+      // Rename markers to ensure contiguous alpha order
+      //
+      function renameMapMarkers() {
+        let i = 0;
         const labels = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        let labelIndex = 0;
-        
-        // Init the map
-        function initMap() {
-            map = new google.maps.Map(document.getElementById("map"), {
-                zoom: 12,
-                center: { lat: 45.83550785027975, lng: 6.863880441774906 },
-            });
-            // Add a marker when the map is clicked.
-            google.maps.event.addListener(map, "click", (event) => {
-                addMarker(event.latLng, map);
-            });
-        }
-        
-        // Adds a marker to the map.
-        function addMarker(location, map) {
-            var marker = new google.maps.Marker({
-                position: location,
-                label: labels[labelIndex++ % labels.length],
-                draggable:true,
-                map: map,
-            });
-            // Right click on marker deletes it.
-            marker.addListener("contextmenu", function(event) {
-                m = this;
-                markers = markers.filter(function(item) {
-                    return item !== m;
-                });
-                this.setMap(null);
-            });
-            // Register marker.
-            markers.push(marker);
-        }
+        mapMarkers.forEach(marker => {
+          marker.setLabel(labels[i++]);          
+        });
+      }
+
     </script>
 
     <!-- Calling the server -->
     <script>
-        function locatePhotographer() {
+      //
+      // Collect the data from the page, call the server and add a marker for the photographer on the map.
+      //
+      function locatePhotographer() {
 
-            // Check inputs
-            if (markerArea.getState().markers.length < 3) {
-                alert("At least three markers are required on the picture!");
-                return
-            }
-            if (markers.length < 3) {
-                alert("At least three markers are required on the map!");
-                return
-            }
-            if (markerArea.getState().markers.length != markers.length) {
-                alert("The number of markers on the picture and on the map must be equal!");
-                return
-            }
+          // Check inputs
+          numPicMarkers = markerLayer.getChildren().length;
+          numMapMarkers = mapMarkers.length;
+          if (numPicMarkers < 3) {
+              alert("At least three markers are required on the picture!");
+              return
+          }
+          if (numMapMarkers < 3) {
+              alert("At least three markers are required on the map!");
+              return
+          }
+          if (numMapMarkers != numPicMarkers) {
+              alert("The number of markers on the picture and on the map must be equal!");
+              return
+          }
 
-            // Build the json message
-            const projections = markerArea
-                .getState().markers
-                .map(function (marker) {return marker.x2})
-                .sort(function (a, b) {return a - b});
-            const latlngs = markers
-                .sort(function (a, b) {if (a.label < b.label) {return -1}; if (a.label > b.label) {return 1}; return 0})
-                .map(function(marker) {return [marker.position.lat(), marker.position.lng()]});
-            const payload = {
-                projections: projections,
-                latlngs: latlngs
-            };
+          // Build message payload
+          const projections = markerLayer
+              .getChildren()
+              .map(function (marker) {return marker.getPosition().x})
+              .sort(function (a, b) {return a - b});
+          const latlngs = mapMarkers
+              .map(function(marker) {return [marker.position.lat(), marker.position.lng()]});
+          const payload = {
+              projections: projections,
+              latlngs: latlngs
+          };
 
-            // Call server
-            fetch('../locate/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload),
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Recv:', data);
-                if (data.status != "ok") {
-                    alert(data.status);
-                    return
-                }
-                // Add a marker at the photographer location.
-                loc = {lat: data.location[0], lng: data.location[1]};
-                var marker = new google.maps.Marker({
-                    position: loc,
-                    label: "X",
-                    draggable:false,
-                    map: map,
-                });
-                // Right click on marker deletes it.
-                marker.addListener("contextmenu", function(event) {
-                    m = this;
-                    markers = markers.filter(function(item) {
-                        return item !== m;
-                    });
-                    this.setMap(null);
-                });
-                // Center on photographer.
-                map.setCenter(loc)
-            })
-            .catch((error) => {
-                console.error('Error:', error);
-            });
-        };
+          // Call the server
+          fetch('../locate/', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(payload),
+          })
+          .then(response => response.json())
+          .then(data => {
+              console.log('Recv:', data);
+              if (data.status != "ok") {
+                  alert(data.status);
+                  return
+              }
+              // Add a marker at the photographer location.
+              loc = {lat: data.location[0], lng: data.location[1]};
+              var marker = new google.maps.Marker({
+                  position: loc,
+                  label: "X",
+                  draggable:false,
+                  map: map,
+              });
+              // Right click on marker deletes it.
+              marker.addListener("contextmenu", function(event) {
+                  m = this;
+                  mapMarkers = mapMarkers.filter(function(item) {
+                      return item !== m;
+                  });
+                  this.setMap(null);
+              });
+              // Center map on photographer.
+              map.setCenter(loc)
+          })
+          .catch((error) => {
+              console.error('Error:', error);
+          });
+      };
     </script>
 
-    <!-- Demo -->
-    <script>
-        // Set up the demo
-        function demo() {
-            // Load init picture
-            previewDefaultText.style.display = "none";
-            previewImage.style.display = "block";
-            previewImage.setAttribute("src", "./picture.png");
-            showMarkerArea(previewImage);
-            // Add the markers on the picture
-            // That is, restore a state saved previously with 'JSON.stringify(markerArea.getState())'
-            markerArea.restoreState(JSON.parse('{"width":912,"height":604,"markers":[{"arrowType":"end","strokeColor":"#EF4444","strokeWidth":3,"strokeDasharray":"","x1":197.6015625,"y1":143.33203125,"x2":197.859375,"y2":172.91796875,"typeName":"ArrowMarker","state":"select"},{"arrowType":"end","strokeColor":"#EF4444","strokeWidth":3,"strokeDasharray":"","x1":292.7890625,"y1":144.32421875,"x2":289.0703125,"y2":181.28125,"typeName":"ArrowMarker","state":"select"},{"arrowType":"end","strokeColor":"#EF4444","strokeWidth":3,"strokeDasharray":"","x1":402.12890625,"y1":142.79296875,"x2":402.765625,"y2":182.59765625,"typeName":"ArrowMarker","state":"select"},{"arrowType":"end","strokeColor":"#EF4444","strokeWidth":3,"strokeDasharray":"","x1":578.0703125,"y1":134.59375,"x2":577.75,"y2":148.55078125,"typeName":"ArrowMarker","state":"select"},{"arrowType":"end","strokeColor":"#EF4444","strokeWidth":3,"strokeDasharray":"","x1":744.32421875,"y1":134.8359375,"x2":743.34765625,"y2":157.19140625,"typeName":"ArrowMarker","state":"select"}]}'));
-            markerArea.render().then((imgURL) => document.getElementById("imageImg").src = imgURL)
-            markerArea.close();
-            // Add the markers on the map
-            latlngs=[{lat: 45.91706381072691, lng: 7.02477006732424},
-                     {lat: 45.90008131460168, lng: 7.004044893341246},
-                     {lat: 45.88759634304873, lng: 7.00697747168141},
-                     {lat: 45.86892320027275, lng: 6.98800888952809},
-                     {lat: 45.86237864638254, lng: 6.951874169679457}];
-            latlngs.forEach(point => {
-                addMarker(point, map)
-            });
-            map.setCenter({lat: 45.90302924721127, lng:6.91997786083133})
-        };
-    </script>
-
-</body>
+  </body>
 </html>
