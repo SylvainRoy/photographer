@@ -56,8 +56,10 @@
         width: container.clientWidth,
         height: 100, //container.clientHeight,
       });
-      var layer = new Konva.Layer();
-      stage.add(layer);
+      var picLayer = new Konva.Layer();
+      var markerLayer = new Konva.Layer();
+      stage.add(picLayer);
+      stage.add(markerLayer);
 
       //
       // Let the user load a picture in the marking area.
@@ -68,16 +70,19 @@
         if (file) {
           const reader = new FileReader();
           reader.addEventListener("load", function() {
-            stage.height(1000); //todo: this should adapt based on pic dimensions
             Konva.Image.fromURL(this.result, function (pic) {
+              // Update dimension of the picture area
+              stage.width(container.clientWidth);
+              stage.height(container.clientWidth * pic.height() / pic.width());
+              // Load picture in background
               pic.setAttrs({
                 x: 0,
                 y: 0,
-                width: container.clientWidth,
-                height: container.clientWidth * pic.height() / pic.width(),
+                width: stage.width(),
+                height: stage.height(),
               });
-              layer.add(pic);
-              layer.batchDraw();
+              picLayer.add(pic);
+              picLayer.draw();
             });
           });
           reader.readAsDataURL(file);
@@ -137,8 +142,8 @@
           mouseovermarker = false;
         });
         // Draw the marker
-        layer.add(tooltip);
-        layer.draw();
+        markerLayer.add(tooltip);
+        markerLayer.draw();
         return tooltip;
       };
       
