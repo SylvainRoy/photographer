@@ -34,116 +34,122 @@
 
     <h1>Title</h1>
 
+    <h2>Step 1 - Load an image and mark known location</h2>
     <input type="file" name="inpfile" id="inpFile">
     <div id="container"></div>
     
+    <h2>Step 2 - Mark know location on the map</h2>
+    <p>Ca va etre cool...</p>
 
-    <!-- Loading the picture -->
+    <!-- Loading and marking the picture -->
     <script>     
-      const inpFile = document.getElementById("inpFile");
-
-      inpFile.addEventListener("change", function() {
-          const file = this.files[0];
-          if (file) {
-              const reader = new FileReader();
-              reader.addEventListener("load", function() {
-                  Konva.Image.fromURL(this.result, function (pic) {
-                      container = document.getElementById("container");
-                      pic.setAttrs({
-                          x: 0,
-                          y: 0,
-                          width: container.clientWidth,
-                          //height: container.clientHeight,
-                      });
-                      layer.add(pic);
-                      layer.batchDraw();
-                  });
-              });
-              reader.readAsDataURL(file);
-          } else {
-              // No image selected, clean up...
-          };
+      
+      //
+      // Set up the picture viewer/marker
+      //
+      var mouseovermarker = false;
+      //var width = window.innerWidth;
+      //var height = window.innerHeight;
+      var container = document.getElementById('container');
+      var stage = new Konva.Stage({
+        container: 'container',
+        width: container.clientWidth,
+        height: 100, //container.clientHeight,
       });
-    </script>
+      var layer = new Konva.Layer();
+      stage.add(layer);
 
-    <!-- Marking the picture -->
-    <script>
-
-
-        var mouseovermarker = false;
-        var stage;
-        var layer;
-
-        // Add a marker when picture clicked
-        document.getElementById("container").addEventListener('click', onMouseUpdate, false);
-        function onMouseUpdate(e) {
-            if (!mouseovermarker) {
-                x = e.offsetX;
-                y = e.offsetY;
-                addPictureMarker(x, y, `(${x}, ${y})`);
-            };
+      //
+      // Let the user load a picture in the marking area.
+      //
+      const inpFile = document.getElementById("inpFile");
+      inpFile.addEventListener("change", function() {
+        const file = this.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.addEventListener("load", function() {
+            stage.height(1000); //todo: this should adapt based on pic dimensions
+            Konva.Image.fromURL(this.result, function (pic) {
+              pic.setAttrs({
+                x: 0,
+                y: 0,
+                width: container.clientWidth,
+                height: container.clientWidth * pic.height() / pic.width(),
+              });
+              layer.add(pic);
+              layer.batchDraw();
+            });
+          });
+          reader.readAsDataURL(file);
+        } else {
+          // todo: No image selected, clean up...
+          // - all markers to be erased
         };
-
-        // Define the drawing area for the picture & markers
-        var width = window.innerWidth;
-        var height = window.innerHeight;
-        //var width = document.getElementById('container80').clientWidth;
-        //var height = document.getElementById('container').clientHeight;
-        stage = new Konva.Stage({
-            container: 'container',
-            width: width,
-            height: height,
+      });      
+      
+      //
+      // Detect click on the picture to add a marker
+      //
+      document.getElementById("container").addEventListener('click', onMouseUpdate, false);
+      function onMouseUpdate(e) {
+        if (!mouseovermarker) {
+          x = e.offsetX;
+          y = e.offsetY;
+          addPictureMarker(x, y, `(${x}, ${y})`);
+        };
+      };      
+      
+      //
+      // Add a marker on the picture
+      //
+      function addPictureMarker(x, y, text) {
+        console.log(`pictureMarker: ${x} / ${stage.width()}, ${y} / ${stage.height()}`)
+        var tooltip = new Konva.Label({
+          x: x,
+          y: y,
+          opacity: 0.75,
+          draggable: true,
         });
-        layer = new Konva.Layer();
-        stage.add(layer);
-
-
-        // Add a marker on the picture
-        function addPictureMarker(x, y, text) {
-            console.log(`pictureMarker: ${x} / ${stage.width()}, ${y} / ${stage.height()}`)
-            var tooltip = new Konva.Label({
-                x: x,
-                y: y,
-                opacity: 0.75,
-                draggable: true,
-            });
-            tooltip.add(
-                new Konva.Tag({
-                    fill: 'black',
-                    pointerDirection: 'down',
-                    pointerWidth: 10,
-                    pointerHeight: 30,
-                })
-            );
-            tooltip.add(
-                new Konva.Text({
-                    text: text,
-                    fontFamily: 'Calibri',
-                    fontSize: 18,
-                    padding: 5,
-                    fill: 'white',
-                })
-            );
-            // add cursor styling and detect mouse over marker
-            tooltip.on('mouseover', function () {
-                document.body.style.cursor = 'pointer';
-                mouseovermarker = true;
-            });
-            tooltip.on('mouseout', function () {
-                document.body.style.cursor = 'default';
-                mouseovermarker = false;
-            });
-            // Draw the marker
-            layer.add(tooltip);
-            layer.draw();
-            return tooltip;
-        };
-
-        function removePictureMarker(marker) {
-            marker.destroy();
-            layer.draw();
-        };
-
+        tooltip.add(
+          new Konva.Tag({
+            fill: 'black',
+            pointerDirection: 'down',
+            pointerWidth: 10,
+            pointerHeight: 30,
+          })
+        );
+        tooltip.add(
+          new Konva.Text({
+            text: text,
+            fontFamily: 'Calibri',
+            fontSize: 18,
+            padding: 5,
+            fill: 'white',
+          })
+        );
+        // add cursor styling and detect mouse over marker
+        tooltip.on('mouseover', function () {
+          document.body.style.cursor = 'pointer';
+          mouseovermarker = true;
+        });
+        tooltip.on('mouseout', function () {
+          document.body.style.cursor = 'default';
+          mouseovermarker = false;
+        });
+        // Draw the marker
+        layer.add(tooltip);
+        layer.draw();
+        return tooltip;
+      };
+      
+      //
+      // Remove a marker from the picture
+      //
+      function removePictureMarker(marker) {
+        marker.destroy();
+        layer.draw();
+      };
+      
     </script>
 
 
