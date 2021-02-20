@@ -13,13 +13,13 @@ Run the unit tests:
 
 Run the server, locally:
   > uvicorn server:app --reload
-  Then open http://localhost:8000/index.html#
+  Then open http://localhost:8000/index.html
 
 Manually test the API:
-  > curl -d '{"projections":[1.2, 3.4], "latlng":[[1.3, 6.7], [5.4, 9.6]]}' -H "Content-Type: ST http://localhost:8000/locate/
+  > curl -d '{"projections":[1.2, 3.4], "latlng":[[1.3, 6.7], [5.4, 9.6]]}' -H "Content-Type: application/json" -X POST http://localhost:8000/locate/
 
 Or with a data file:
-  > curl -d "@data.json" -H "Content-Type: ST http://localhost:8000/locate/
+  > curl -d "@data.json" -H "Content-Type: application/json" -X POST http://localhost:8000/locate/
 
 Run the docker image:
   > docker run -p 8000:8000 -d sroy/photographer
@@ -34,7 +34,11 @@ Understand how it works:
 
 ## Todo
 
+ - handling of error from server in the UI
  - better handling of situation where the optimization get out of the acceptable zone
  - test accuracy with only three points
  - remove dead code.
-
+ - github repo
+ - deployment in Azure
+ - fix CB in Azure
+ 
