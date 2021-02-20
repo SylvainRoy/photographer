@@ -1,21 +1,39 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <script src="https://unpkg.com/konva@7.2.3/konva.min.js"></script>
-    <meta charset="utf-8" />
     <title>Konva Drag and Drop Demo</title>
-    <style>
-      body {
-        /* margin: 0;
-        padding: 0;
-        overflow: hidden;*/
-        background-color: #f0f0f0;
-      }
+
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
+    <script src="https://unpkg.com/konva@7.2.3/konva.min.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBO537xsIPtelBtuGlhnx7PmaW_nIjSwyc&callback=initMap&libraries=&v=weekly" defer></script>
+
+    <meta charset="utf-8" />
+
+    <style type="text/css">
 
       #container {
         border-style: solid;
-        /* border-color: coral; */
+        width: 100%;
+        margin-left: auto;
+        margin-right: auto;
       }
+
+      #map {
+          height: 60%;
+          width: 100%;
+          margin-left: auto;
+          margin-right: auto;
+          border-style: solid;
+      }
+
+      html,
+      body {
+          height: 90%;
+          background-color: #f0f0f0;
+          /* margin: 0; */
+          /* padding: 0; */
+      }
+      
     </style>
   </head>
   <body>
@@ -27,7 +45,9 @@
     <div id="container"></div>
     
     <h2>Step 2 - Mark know location on the map</h2>
-    <p>Ca va etre cool...</p>
+    <div id="map"></div>
+
+    <p>C'est la fin...</p>
 
     <!-- Loading and marking the picture -->
     <script>     
@@ -179,6 +199,48 @@
 
     </script>
 
+    <!-- Loading and marking the map -->
+    <script>
+      var map;
+      var markers = []; // the list of markers added on the map
+      
+      // Markers appear when the user clicks on the map.
+      // Each marker is labeled with a single alphabetical character.
+      const labels = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+      let labelIndex = 0;
+      
+      // Init the map
+      function initMap() {
+        map = new google.maps.Map(document.getElementById("map"), {
+          zoom: 12,
+          center: { lat: 45.83550785027975, lng: 6.863880441774906 },
+        });
+        // Add a marker when the map is clicked.
+        google.maps.event.addListener(map, "click", (event) => {
+          addMarker(event.latLng, map);
+        });
+      }
+      
+      // Adds a marker to the map.
+      function addMarker(location, map) {
+        var marker = new google.maps.Marker({
+          position: location,
+          label: labels[labelIndex++ % labels.length],
+          draggable:true,
+          map: map,
+        });
+        // Right click on marker deletes it.
+        marker.addListener("contextmenu", function(event) {
+          m = this;
+          markers = markers.filter(function(item) {
+            return item !== m;
+          });
+          this.setMap(null);
+        });
+        // Register marker.
+        markers.push(marker);
+      }
+    </script>
 
   </body>
 </html>
