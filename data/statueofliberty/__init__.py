@@ -13,7 +13,7 @@ mapfile = "map.png"
 picturefile = "photo.jpg"
 
 # Dimension of the map (optional if map provided)
-dimensions = (814, 907)
+dimensions = (1352, 1726)
 
 # Expected position of the photographer (optional)
 photographer = None
