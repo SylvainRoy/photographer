@@ -17,10 +17,9 @@
 
     "photographer_latlng": [45.93405957458578, 6.845223667218522],
 
-    "xy": [
-    ],
+    "xy": [],
 
-    "photographer_xy": [0, 0],
+    "photographer_xy": [],
 
     "picture": "photo.jpg" 
 }
