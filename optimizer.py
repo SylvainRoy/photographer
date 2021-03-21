@@ -29,7 +29,7 @@ def compute_projection_on_picture(photographer, summits, alpha, rho=1):
     Output:
      - s1_ to sN_, the projections of all summits on the picture.
     """
-    if photographer_area is None:
+    if photographer is None:
         raise RuntimeError("photograper position cannot be None")
     p = photographer
     s1, s2toM, sN = summits[0], summits[1:-1], summits[-1]
@@ -130,13 +130,11 @@ def find_photograper(summits, projections, init=None):
     - The error at the photographer position
     - The optimisation path
     """
-    # If no initial position, take a point in front of the two extrem summits
+    # If no initial position, take the barycenter of the possible of the are
+    # where the photographer can be.
     if init is None:
-        dist = 1
-        init = (
-            (summits[0][0] + summits[-1][0]) / 2 + dist * (summits[-1][1] - summits[0][1]),
-            (summits[0][1] + summits[-1][1]) / 2 - dist * (summits[-1][0] - summits[0][0])
-        )
+        area = photographer_area(summits)
+        init = barycenter(area)
 
     path = []
     def errorfun(position):

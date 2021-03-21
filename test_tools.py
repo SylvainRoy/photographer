@@ -80,7 +80,8 @@ class TestPhotographerArea(unittest.TestCase):
 
     def test_basic(self):
         envelop = tools.photographer_area(
-            [(100, 400), (200, 300), (400, 400), (400, 250), (300, 100)], (500, 500)
+            [(100, 400), (200, 300), (400, 400), (400, 250), (300, 100)],
+            xmin=0, xmax=500, ymin=0, ymax=500
         )
         self.assertEqual(
             envelop,
@@ -94,7 +95,8 @@ class TestPhotographerArea(unittest.TestCase):
         )
 
         envelop = tools.photographer_area(
-            [(522, 469), (521, 371), (445, 267), (345, 323), (303, 286)], (600, 760)
+            [(522, 469), (521, 371), (445, 267), (345, 323), (303, 286)],
+            xmin=0, xmax=600, ymin=0, ymax=760
         )
         self.assertEqual(
             envelop,

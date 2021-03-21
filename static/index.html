@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Konva Drag and Drop Demo</title>
+    <title>Where was the photographer?</title>
 
     <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
     <script src="https://unpkg.com/konva@7.2.3/konva.min.js"></script>
@@ -44,8 +44,12 @@
     <p>
         This small tool helps you find the location from which a picture has been taken.
         All you need to know is a few points on the picture that you can locate on a map.
-        If you are not sure what to do, set the <a href="#" onclick="demo()">demo</a> and then click on the "Locate" button at the very bottom.
     </p>
+    <p>
+        If you are not sure what to do, select an example and click on "Locate" below:
+        <select name="examples" id="examples"></select>
+    </p>
+
 
     <h2>Step 1 - Load an image and mark known locations</h2>
     <p>Select a photo and locate at least 3 points that you can locate on the map. Please be as acurate as possible!</p>
@@ -95,22 +99,15 @@
       stage.add(markerLayer);
 
       //
-      // Let the user load a picture in the marking area.
+      // Set a picture in the picture area.
       //
-      const inpFile = document.getElementById("inpFile");
-      inpFile.addEventListener("change", function() {
+      function setPicture(picture) {
         // Remove any marker left
         markerLayer.destroyChildren();
         markerLayer.draw();
-        // Load picture
-        const file = this.files[0];
-        if (!file) {
-          return; // The user canceled
-        }
-        const reader = new FileReader();
-        reader.addEventListener("load", function() {
-          Konva.Image.fromURL(this.result, function (pic) {
-            // Update dimension of the picture area
+        // Load picture in the picture area
+        Konva.Image.fromURL(picture, function (pic) {
+            // Update dimension of the area
             stage.width(container.clientWidth);
             stage.height(container.clientWidth * pic.height() / pic.width());
             // Load picture in background
@@ -123,6 +120,22 @@
             picLayer.add(pic);
             picLayer.draw();
           });
+      };
+
+      //
+      // Let the user choose a picture on his machine.
+      //
+      const inpFile = document.getElementById("inpFile");
+      inpFile.addEventListener("change", function() {
+        // Retrieve picture file
+        const file = this.files[0];
+        if (!file) {
+          return; // The user canceled
+        }
+        // Load picture
+        const reader = new FileReader();
+        reader.addEventListener("load", function() {
+          setPicture(this.result);
         });
         reader.readAsDataURL(file);
       });      
@@ -162,7 +175,7 @@
       // Add a marker on the picture
       //
       function addPictureMarker(x, y) {
-        console.log(`pictureMarker: ${x} / ${stage.width()}, ${y} / ${stage.height()}`)
+        console.log(`addPictureMarker: ${x} / ${stage.width()}, ${y} / ${stage.height()}`)
         var tooltip = new Konva.Label({
           x: x,
           y: y,
@@ -285,6 +298,25 @@
 
     <!-- Calling the server -->
     <script>
+
+      function buildJsonMessage() {
+          // Retrieve img scaling factor to invert it (it helps debuging).
+          img = picLayer.getChildren()[0];
+          c = img.attrs.image.naturalWidth / img.width();
+          // Retrieve data from page.
+          const projections = markerLayer
+              .getChildren()
+              .map(function (marker) {return [c * marker.getPosition().x, c * marker.getPosition().y]})
+              .sort(function (a, b) {return a - b});
+          const latlngs = mapMarkers
+              .map(function(marker) {return [marker.position.lat(), marker.position.lng()]});
+          const payload = {
+              projections: projections,
+              latlngs: latlngs
+          };
+          return JSON.stringify(payload);
+      }
+
       //
       // Collect the data from the page, call the server and add a marker for the photographer on the map.
       //
@@ -306,25 +338,14 @@
               return
           }
 
-          // Build message payload
-          const projections = markerLayer
-              .getChildren()
-              .map(function (marker) {return marker.getPosition().x})
-              .sort(function (a, b) {return a - b});
-          const latlngs = mapMarkers
-              .map(function(marker) {return [marker.position.lat(), marker.position.lng()]});
-          const payload = {
-              projections: projections,
-              latlngs: latlngs
-          };
-
           // Call the server
           fetch('../locate/', {
               method: 'POST',
               headers: {
                   'Content-Type': 'application/json',
               },
-              body: JSON.stringify(payload),
+              //body: JSON.stringify(payload),
+              body: buildJsonMessage(),
           })
           .then(response => response.json())
           .then(data => {
@@ -356,6 +377,74 @@
               console.error('Error:', error);
           });
       };
+    </script>
+
+    <!-- Setting up the examples -->
+    <script>
+
+      var select = document.getElementById("examples");
+
+      //
+      // Set the list of examples. 
+      //
+      function setListOfExamples() {
+        // First add an empty option
+        option = document.createElement("option");
+            option.name = "--";
+            option.text = "--";
+            select.appendChild(option);
+        // Set the list of examples from the server  
+        fetch('../examples/', {
+          method: 'GET',
+        })
+        .then(response => response.json())
+        .then(data => {
+          console.log('Recv:', data);
+          data.forEach(element => {
+            option = document.createElement("option");
+            option.name = element;
+            option.text = element;
+            select.appendChild(option);  
+          });
+        })
+      };
+
+      setListOfExamples();
+
+      //
+      // Set an example
+      //
+      function setExample(example) {
+        if (example == "--") {
+          return
+        }
+        // Call the server to retrieve the example data
+        fetch('../examples/' + example, {
+          method: 'GET',
+        })
+        .then(response => response.json())
+        .then(data => {
+          console.log(data);
+          // Display the photo with the markers
+          setPicture(data.picture);
+          data.projections.forEach(p => {
+              let x = p[0] * stage.width() / data.picture_size[0];
+              let y = p[1] * stage.width() / data.picture_size[0];
+              addPictureMarker(x, y);
+            })
+          // Add markers on the map and recenter
+          data.latlngs.forEach(c => {
+            addMarker({lat: c[0], lng: c[1]}, map);
+          });
+          map.setCenter({lat: data.latlngs[0][0], lng: data.latlngs[0][1]});
+        });
+      };
+
+      select.addEventListener("change", function() {
+        let example = select.selectedOptions[0].name;
+        setExample(example);
+      });
+
     </script>
 
   </body>
