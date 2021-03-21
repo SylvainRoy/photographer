@@ -26,7 +26,7 @@ if __name__ == "__main__":
     for (summit, name) in zip(data.summits, "ABCDEFGHIKLMNOPQRSTUVWXYZ"):
         map.draw_point(summit, name, color="red")
     map.draw_area(
-        photographer_area(data.summits, map.dimensions),
+        photographer_area(data.summits, xmin=0, xmax=map.dimensions[0], ymin=0, ymax=map.dimensions[1]),
         color="red"
     )
     if data.photographer is not None:

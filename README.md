@@ -34,6 +34,31 @@ Understand how it works:
 
 ## Todo
 
+ - tests available from UI
+    - config in json file                                     OK
+    - service to discover & get json on server side           OK
+    - ability to load a test in UI                            OK
+    - create json files in all data examples.
+    - ability to get new coordinates/positions from UI
+      - just a js function to call from the console.
+
+ - Map able to display with x,y and with lat,lng.             OK
+    - Map(picture | (x,y)).set_latlng_ref(...)
+
+ - New notebook
+    - Show picture with markers
+    - Show map with markers
+      - from lat&lng directly
+    - Show map with area + init + search
+ 
+ Notebooks reorganisation
+    - localisation - x,y
+    - localisation - lat,lon
+    - localisation - initialisation
+
+ - statueofliberty is broken with current init
+    - the init should be closer to the summits
+ - main.py should run all the cases in data and return a score
  - handling of error from server in the UI
  - better handling of situation where the optimization get out of the acceptable zone
  - test accuracy with only three points

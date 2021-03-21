@@ -61,7 +61,92 @@ def is_valid_location(point, summits):
     return True
 
 
-def photographer_area(summits, mapDimension):
+def filter_points_on_the_right(points, vectors):
+    """
+    filter the points that are on the right of all the vectors.
+    """
+    envelop = []
+    for p in points:
+        valid = True
+        for v in vectors:
+            vx, vy = v[1][0] - v[0][0], v[1][1] - v[0][1]
+            px, py = p[0] - v[0][0], p[1] - v[0][1]
+            cross = vx * py - vy * px
+            if cross >= 1e-10:  # the wonderful world of numerical computation.
+                valid = False
+                break
+        if valid:
+            envelop.append(p)
+    if len(envelop) == 0:
+        raise RuntimeError(
+            "Such a picture cannot be taken. "
+            "Check the location and order of the points on the map and picture."
+        )
+    return envelop
+
+
+def find_all_intersections(vectors):
+    """
+    return all vectors intersections.
+    """
+    intersections = set()
+    for i in range(0, len(vectors)):
+        for j in range(i, len(vectors)):
+            inter = intersection_lines(vectors[i][0], vectors[i][1], vectors[j][0], vectors[j][1])
+            if inter is not None:
+                intersections.add(inter)
+    return list(intersections)
+
+
+def photographer_area(summits, xmin=None, xmax=None, ymin=None, ymax=None):
+    """
+    Return the envelop (a list of point) of the area where the photograph is located.
+    summits: list of summits coordinates (x, y) in the order they appears on the picture (left to right).
+    xmin, ... ymax: the enclosing area of the map.
+    """
+
+    # Compute all summit vectors (photographer is on the right of those vectors)
+    summit_vectors = []
+    for i in range(0, len(summits)):
+        for j in range(i + 1, len(summits)):
+            summit_vectors.append((summits[i], summits[j]))
+
+    # An enclosing zone is needed to have a "close" area
+    if xmin is None:
+        # Find all the corners of the area
+        intersections = find_all_intersections(summit_vectors)
+        envelop = filter_points_on_the_right(intersections + summits, summit_vectors)
+        # Let's define a square centered on the barycentre and big enough to contain it all.
+        bary_summit = barycenter(summits)
+        mdist = 2 * max([distance(bary_summit, p) for p in envelop + summits])
+        zone = [(bary_summit[0] - mdist, bary_summit[1] - mdist),
+                (bary_summit[0] - mdist, bary_summit[1] + mdist),
+                (bary_summit[0] + mdist, bary_summit[1] + mdist),
+                (bary_summit[0] + mdist, bary_summit[1] - mdist)]
+    else:
+        zone = [(xmin, ymin), (xmin, ymax), (xmax, ymax), (xmax, ymin)]
+    
+    # Find all the corners of the area
+    zone_vectors = list(zip(zone, zone[1:] + zone[:1]))
+    close_vectors = summit_vectors + zone_vectors
+    close_intersections = find_all_intersections(close_vectors)
+    close_envelop = filter_points_on_the_right(close_intersections, close_vectors)
+
+    # Sort points (trigo order) of the (convex) envelop of the area
+    bary_envelop = barycenter(close_envelop)
+    pabovesorted = sorted(
+        [p for p in close_envelop if p[1] - bary_envelop[1] >= 0],
+        key=lambda p: -(p[0] - bary_envelop[0]) / sqrt((p[0] - bary_envelop[0]) ** 2 + (p[1] - bary_envelop[1]) ** 2),
+    )
+    pbelowsorted = sorted(
+        [p for p in close_envelop if p[1] - bary_envelop[1] < 0],
+        key=lambda p: (p[0] - bary_envelop[0]) / sqrt((p[0] - bary_envelop[0]) ** 2 + (p[1] - bary_envelop[1]) ** 2),
+    )
+    area = pabovesorted + pbelowsorted
+    return area
+
+
+def photographer_area_old(summits, mapDimension):
     """
     Return the envelop (a list of point) of the area where the photograph is located.
     summits: list of summits (x, y) as seen from left to right on the picture
@@ -217,7 +302,7 @@ def selections_of_five_summits(summits):
 def change_coordinate_funs(utm_coord, local_coord):
     """
     Return two functions to change the coordinate system of a point.
-    Input: a list of at list two points in the two coordinate system.
+    Input: a list of at least two points in the two coordinate system (only the first and last point are used).
     """
     alphax = (local_coord[-1][0] - local_coord[0][0]) / (utm_coord[-1][0] - utm_coord[0][0])
     alphay = (local_coord[-1][1] - local_coord[0][1]) / (utm_coord[-1][1] - utm_coord[0][1])

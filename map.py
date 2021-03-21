@@ -5,9 +5,10 @@ The class Map contains all basic drawing action on a Map.
 """
 
 import numpy as np
+import utm
+from matplotlib.pyplot import imshow
 from PIL import Image as PILImage
 from PIL import ImageDraw
-from matplotlib.pyplot import imshow
 
 from tools import project_on_lens
 
@@ -37,13 +38,65 @@ class Map:
             raise RuntimeError("A Map requires either a file or a size.")
         self.draw = ImageDraw.Draw(self.map)
         self.error_matrixes = {}
+        self.alphax = None
+        self.alphay = None
+        self.Xo = None
+        self.Yo = None
+        self.zone_number = None
+        self.zone_letter = None
 
     def copy(self):
         """Return a deep copy of the map"""
         m = Map(self.dimensions)
         m.map = self.map.copy()
         m.draw = ImageDraw.Draw(m.map)
+        m.error_matrixes = self.error_matrixes
+        m.alphax = self.alphax
+        m.alphay = self.alphay
+        m.Xo = self.Xo
+        m.Yo = self.Yo
+        m.zone_number = self.zone_number
+        m.zone_letter = self.zone_letter
         return m
+
+    def set_latlng(self, xy1, latlng1, xy2, latlng2):
+        """
+        Return two functions to change the coordinate system of a point.
+        Input: a list of at least two points in the two coordinate system (only the first and last point are used).
+        """
+        easting1, northing1, zone_number1, zone_letter1 = utm.from_latlon(*latlng1)
+        easting2, northing2, zone_number2, zone_letter2 = utm.from_latlon(*latlng2)
+        if (zone_number1 != zone_number2) or (zone_letter1 != zone_letter2):
+            raise RuntimeError("The map is on two utm zones.")
+        utm1 = (easting1, northing1)
+        utm2 = (easting2, northing2)
+        self.alphax = (xy2[0] - xy1[0]) / (utm2[0] - utm1[0])
+        self.alphay = (xy2[1] - xy1[1]) / (utm2[1] - utm1[1])
+        self.Xo = utm1[0] - xy1[0] / self.alphax
+        self.Yo = utm1[1] - xy1[1] / self.alphay
+        self.zone_number = zone_number1
+        self.zone_letter = zone_letter1
+        return self
+
+    def latlng_to_xy(self, latlng):
+        """Convert coordinate in (lat,lng) to (x,y) on the map."""
+        if self.alphax is None:
+            raise RuntimeError("Attempt to convert lat,lng to x,y without prior call to 'set_latlng'.")
+        easting, northing, zone_number, zone_letter = utm.from_latlon(*latlng)
+        if (zone_number != self.zone_number) or (zone_letter != self.zone_letter):
+            raise RuntimeError("The point is not on the same utm zone than the map.")
+        x = (easting - self.Xo) * self.alphax
+        y = (northing - self.Yo) * self.alphay
+        return (x, y)
+
+    def xy_to_latlng(self, xy):
+        """Convert coordinate in (x,y) on the map to (lat, lng)."""
+        if self.alphax is None:
+            raise RuntimeError("Attempt to convert x,y to lat,lng without prior call to 'set_latlng'.")
+        easting = xy[0] / self.alphax + self.Xo
+        northing = xy[1] / self.alphay + self.Yo
+        lat, lng = utm.to_latlon(easting, northing, self.zone_number, self.zone_letter)
+        return (lat, lng)
 
     def show(self, notebook=True):
         """Display the map"""
@@ -52,10 +105,6 @@ class Map:
         else:
             self.map.show()
         return self
-
-    def show_in_notebook(self):
-        """Display the map in a notebook."""
-
 
     def save(self, filename):
         """Save map in a jpg file"""
@@ -69,13 +118,17 @@ class Map:
         self.draw.point((x, y_), fill=color)
         return self
 
-    def draw_point(self, point, name="", color=0):
+    def draw_point(self, point, name="", color=0, latlng=False):
         """Draw a point on the map"""
-        (x, y) = point
+        if latlng:
+            (x, y) = self.latlng_to_xy(point)
+        else:
+            (x, y) = point
         y = self.dimensions[1] - y
-        self.draw.line((x - 5, y, x + 5, y), fill=color, width=1)
-        self.draw.line((x, y - 5, x, y + 5), fill=color, width=1)
-        self.draw.text((x + 5, y + 5), name, fill=color)
+        d = int(min(self.dimensions) / 100)
+        self.draw.line((x - d, y, x + d, y), fill=color, width=1)
+        self.draw.line((x, y - d, x, y + d), fill=color, width=1)
+        self.draw.text((x + d, y + d), name, fill=color)
         return self
 
     def draw_segment(self, p1, p2, color=0):
