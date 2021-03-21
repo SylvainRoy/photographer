@@ -27,7 +27,7 @@ class Map:
     A map on which to draw segments, points, etc.
     """
 
-    def __init__(self, file=None, dimensions=None):
+    def __init__(self, file=None, dimensions=None, y_origin="top"):
         if file is not None:
             self.map = PILImage.open(file)
             self.dimensions = self.map.size
@@ -36,6 +36,9 @@ class Map:
             self.map = PILImage.new("RGB", self.dimensions, (255, 255, 255, 0))
         else:
             raise RuntimeError("A Map requires either a file or a size.")
+        if y_origin not in ["top", "bottom"]:
+            raise RuntimeError("y_origin must be 'top' or 'bottom'.")
+        self.y_origin = y_origin
         self.draw = ImageDraw.Draw(self.map)
         self.error_matrixes = {}
         self.alphax = None
@@ -114,7 +117,10 @@ class Map:
     def draw_pixel(self, point, color=0):
         """Draw a pixel on the map."""
         (x, y) = point
-        y_ = self.dimensions[1] - y
+        if self.y_origin == "bottom":
+            y_ = self.dimensions[1] - y
+        else:
+            y_ = y
         self.draw.point((x, y_), fill=color)
         return self
 
@@ -124,20 +130,28 @@ class Map:
             (x, y) = self.latlng_to_xy(point)
         else:
             (x, y) = point
-        y = self.dimensions[1] - y
+        if self.y_origin == "bottom":
+            y_ = self.dimensions[1] - y
+        else:
+            y_ = y
         d = int(min(self.dimensions) / 100)
-        self.draw.line((x - d, y, x + d, y), fill=color, width=1)
-        self.draw.line((x, y - d, x, y + d), fill=color, width=1)
-        self.draw.text((x + d, y + d), name, fill=color)
+        self.draw.line((x - d, y_, x + d, y_), fill=color, width=1)
+        self.draw.line((x, y_ - d, x, y_ + d), fill=color, width=1)
+        self.draw.text((x + d, y_ + d), name, fill=color)
         return self
 
-    def draw_segment(self, p1, p2, color=0):
+    def draw_segment(self, p1, p2, color=0, latlng=False):
         """Draw a segment on the map"""
-        self.draw.line(
-            (p1[0], self.dimensions[1] - p1[1], p2[0], self.dimensions[1] - p2[1]),
-            fill=color,
-            width=1,
-        )
+        if latlng:
+            p1 = self.latlng_to_xy(p1)
+            p2 = self.latlng_to_xy(p2)
+        if self.y_origin == "bottom":
+            p1_ = self.dimensions[1] - p1[1]
+            p2_ = self.dimensions[1] - p2[1]
+        else:
+            p1_ = p1[1]
+            p2_ = p2[1]
+        self.draw.line((p1[0], p1_, p2[0], p2_), fill=color, width=1)
         return self
 
     def draw_area(self, points, color=0):
@@ -151,13 +165,14 @@ class Map:
             self.draw_point(points[i], color=color)
         return self
 
-    def draw_path(self, points, color=0):
+    def draw_path(self, points, color=0, latlng=False):
         """Draw a close area defined by a list of points."""
         for i in range(0, len(points)-1):
             self.draw_segment(
                 points[i],
                 points[(i + 1)],
-                color
+                color,
+                latlng
             )
             self.draw_point(points[i], color=color)
         self.draw_point(points[i+1], color=color)
@@ -179,7 +194,10 @@ class Map:
         for x in range(0, self.dimensions[0]):
             for y in range(0, self.dimensions[1]):
                 if testfun((x, y)):
-                    y = self.dimensions[1] - y - 1
+                    if self.y_origin == "bottom":
+                        y = self.dimensions[1] - y - 1
+                    else:
+                        y = y - 1
                     newcolor = tuple(
                         [max(i - 20, 0) for i in self.map.getpixel((x, y))]
                     )
