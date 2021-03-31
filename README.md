@@ -38,9 +38,7 @@ Understand how it works:
 
     - statueofliberty is broken:
       - it used to be much more accurate
-        - an init closer to the building was working better. Maybe the issue.
-      - removing the thin building close to central park gets to an impossible picture!
-        - That doesn't make sense: less points makes it "more" possible.
+        - an init closer to the photographer was working better. Maybe the issue.
 
     - aiguillemidi2
       - raise an exception when used with lat&lng

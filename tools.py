@@ -65,6 +65,9 @@ def filter_points_on_the_right(points, vectors):
     """
     filter the points that are on the right of all the vectors.
     """
+    # In a perfect world, the threshold should simply be 0.
+    # Numerical computation is not a perfect world.
+    threshold = (sum(p[0] for p in points) + sum(p[1] for p in points)) / (2e10 * len(points))
     envelop = []
     for p in points:
         valid = True
@@ -72,16 +75,11 @@ def filter_points_on_the_right(points, vectors):
             vx, vy = v[1][0] - v[0][0], v[1][1] - v[0][1]
             px, py = p[0] - v[0][0], p[1] - v[0][1]
             cross = vx * py - vy * px
-            if cross >= 1e-10:  # the wonderful world of numerical computation.
+            if cross >= threshold:
                 valid = False
                 break
         if valid:
             envelop.append(p)
-    if len(envelop) == 0:
-        raise RuntimeError(
-            "Such a picture cannot be taken. "
-            "Check the location and order of the points on the map and picture."
-        )
     return envelop
 
 
@@ -111,11 +109,16 @@ def photographer_area(summits, xmin=None, xmax=None, ymin=None, ymax=None):
         for j in range(i + 1, len(summits)):
             summit_vectors.append((summits[i], summits[j]))
 
-    # An enclosing zone is needed to have a "close" area
+    # An enclosing zone is needed to ensure a "closed" area
     if xmin is None:
         # Find all the corners of the area
         intersections = find_all_intersections(summit_vectors)
         envelop = filter_points_on_the_right(intersections + summits, summit_vectors)
+        if len(envelop) == 0:
+            raise RuntimeError(
+                "Such a picture cannot be taken. "
+                "Check the location and order of the points on the map and picture."
+            )
         # Let's define a square centered on the barycentre and big enough to contain it all.
         bary_summit = barycenter(summits)
         mdist = 2 * max([distance(bary_summit, p) for p in envelop + summits])
@@ -131,6 +134,11 @@ def photographer_area(summits, xmin=None, xmax=None, ymin=None, ymax=None):
     close_vectors = summit_vectors + zone_vectors
     close_intersections = find_all_intersections(close_vectors)
     close_envelop = filter_points_on_the_right(close_intersections, close_vectors)
+    if len(close_envelop) == 0:
+        raise RuntimeError(
+            "Such a picture cannot be taken. "
+            "Check the location and order of the points on the map and picture."
+        )
 
     # Sort points (trigo order) of the (convex) envelop of the area
     bary_envelop = barycenter(close_envelop)
@@ -144,80 +152,6 @@ def photographer_area(summits, xmin=None, xmax=None, ymin=None, ymax=None):
     )
     area = pabovesorted + pbelowsorted
     return area
-
-
-def photographer_area_old(summits, mapDimension):
-    """
-    Return the envelop (a list of point) of the area where the photograph is located.
-    summits: list of summits (x, y) as seen from left to right on the picture
-    mapDimension: dimension (x, y) of the map that contains the summits and the photographer
-    """
-    corners = [
-        (0, 0),
-        (0, mapDimension[1]),
-        (mapDimension[0], mapDimension[1]),
-        (mapDimension[0], 0),
-    ]
-    # Build list of vectors (summits to summits + borders of the map)
-    # Possible points are on the 'right' of these vectors.
-    summit2summit = []
-    for i in range(0, len(summits)):
-        for j in range(i + 1, len(summits)):
-            summit2summit.append((summits[i], summits[j]))
-    borders = [
-        (corners[0], corners[1]),
-        (corners[1], corners[2]),
-        (corners[2], corners[3]),
-        (corners[3], corners[0]),
-    ]
-    vectors = summit2summit + borders
-    # Build list of all intersection points between
-    # - lines built on two summits
-    # - border of the map 
-    intersections = set()
-    for i in range(0, len(vectors)):
-        for j in range(i, len(vectors)):
-            inter = intersection_lines(
-                vectors[i][0], vectors[i][1], vectors[j][0], vectors[j][1]
-            )
-            if inter is not None:
-                intersections.add(inter)
-    # Filter out all the points that are not acceptable
-    # (i.e. cross product > 0)
-    envelop = []
-    for p in intersections:
-        valid = True
-        for v in vectors:
-            vx = v[1][0] - v[0][0]
-            vy = v[1][1] - v[0][1]
-            px = p[0] - v[0][0]
-            py = p[1] - v[0][1]
-            cross = vx * py - vy * px
-            if cross > 1e-10:  # the wonderful world of numerical computation...
-                valid = False
-                break
-        if valid:
-            envelop.append(p)
-    if len(envelop) == 0:
-        raise RuntimeError(
-            "There seems to be no point on the map to take such a picture!"
-        )
-    # Compute barycenter of envelop
-    bary = barycenter(envelop)
-    # Sort points (trigo order) of the (convex) envelop
-    pabove = [p for p in envelop if p[1] - bary[1] >= 0]
-    pbelow = [p for p in envelop if p[1] - bary[1] < 0]
-    pabovesorted = sorted(
-        pabove,
-        key=lambda p: -(p[0] - bary[0])
-        / sqrt((p[0] - bary[0]) ** 2 + (p[1] - bary[1]) ** 2),
-    )
-    pbelowsorted = sorted(
-        pbelow,
-        key=lambda p: (p[0] - bary[0])
-        / sqrt((p[0] - bary[0]) ** 2 + (p[1] - bary[1]) ** 2),
-    )
-    return pabovesorted + pbelowsorted
 
 
 def project_on_lens(photographer, lens, summit):
