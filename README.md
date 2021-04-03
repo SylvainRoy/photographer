@@ -38,8 +38,6 @@ Understand how it works:
 
     - planpraz
       - doesn't have a map and xy data
-
- - get a global score across all test cases.
  
  - better handling of situation where the optimization get out of the acceptable zone
     - e.g. maximum 400 km?
@@ -48,14 +46,12 @@ Understand how it works:
 
  - github repo
     - then, udpate readme & index.html with this info
+
  - deployment in Azure
     - fix CB in Azure
 
  - Improve Map class
-    - Map(file|dimensions=200, 200).calibrate(....).draw_XXXX(...).zoom(...).show()
+    - Map(basemap|dimensions=200, 200).calibrate(....).draw_XXXX(...).zoom(...).show()
     - Map param:
         - file OR dimension OR nothing(sensible default)
         - y_origin
-
-    - Map().basemap(file, 
- 
