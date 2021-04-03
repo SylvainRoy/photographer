@@ -120,7 +120,7 @@
             picLayer.add(pic);
             picLayer.draw();
           });
-      };
+      }
 
       //
       // Let the user choose a picture on his machine.
@@ -211,17 +211,27 @@
         renamePictureMarkers();
         markerLayer.draw();
         return tooltip;
-      };
+      }
       
       //
-      // Remove a marker from the picture
+      // Remove a marker on the picture
       //
       function removePictureMarker(marker) {
         marker.destroy();
         renamePictureMarkers();
         markerLayer.draw();
-      };
+      }
       
+      //
+      // Removes all markers on the picture
+      //
+      function removeAllPicturesMarkers() {
+        markerLayer.getChildren().forEach(marker => {
+          marker.destroy();
+        });
+        markerLayer.draw();
+      }
+
       //
       // Rename all markers from left to rigth
       //
@@ -235,7 +245,7 @@
             marker.getText().text(labels[i++]);
           };
         });
-      };
+      }
 
     </script>
 
@@ -254,14 +264,14 @@
         });
         // Add a marker when the map is clicked.
         google.maps.event.addListener(map, "click", (event) => {
-          addMarker(event.latLng, map);
+          addMapMarker(event.latLng, map);
         });
       }
       
       //
       // Adds a marker to the map.
       //
-      function addMarker(location, map) {
+      function addMapMarker(location) {
         var marker = new google.maps.Marker({
           position: location,
           label: "Z",
@@ -270,17 +280,33 @@
         });
         // Right click on marker deletes it.
         marker.addListener("contextmenu", function(event) {
-          m = this;
-          mapMarkers = mapMarkers.filter(function(item) {
-            return item !== m;
-          });
-          this.setMap(null);
-          renameMapMarkers();
+          removeMapMarker(this);
         });
         // Register marker.
         mapMarkers.push(marker);
         // Ensure they are named in contiguous alpha order
         renameMapMarkers();
+      }
+
+      //
+      // Removes a marker on the map
+      //
+      function removeMapMarker(marker) {
+        mapMarkers = mapMarkers.filter(function(item) {
+          return item !== marker;
+        });
+        marker.setMap(null);
+        renameMapMarkers();
+      }
+
+      //
+      // Removes all markers on the map
+      //
+      function removeAllMapMarkers() {
+        mapMarkers.forEach(marker => {
+          marker.setMap(null);
+        });
+        mapMarkers = [];
       }
 
       //
@@ -376,7 +402,7 @@
           .catch((error) => {
               console.error('Error:', error);
           });
-      };
+      }
     </script>
 
     <!-- Setting up the examples -->
@@ -407,7 +433,7 @@
             select.appendChild(option);  
           });
         })
-      };
+      }
 
       setListOfExamples();
 
@@ -425,7 +451,10 @@
         .then(response => response.json())
         .then(data => {
           console.log(data);
-          // Display the photo with the markers
+          // Remove markers on picture & map
+          removeAllPicturesMarkers();
+          removeAllMapMarkers();
+          // Display the picture and its markers
           setPicture(data.picture);
           data.projections.forEach(p => {
               let x = p[0] * stage.width() / data.picture_size[0];
@@ -434,11 +463,11 @@
             })
           // Add markers on the map and recenter
           data.latlngs.forEach(c => {
-            addMarker({lat: c[0], lng: c[1]}, map);
+            addMapMarker({lat: c[0], lng: c[1]}, map);
           });
           map.setCenter({lat: data.latlngs[0][0], lng: data.latlngs[0][1]});
         });
-      };
+      }
 
       select.addEventListener("change", function() {
         let example = select.selectedOptions[0].name;
