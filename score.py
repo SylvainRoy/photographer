@@ -33,14 +33,17 @@ def score(display=False):
         if not infojson.exists():
             continue
 
-        if display:
-            print(" - ", example.name, end=": ")
-
         try:
 
             with infojson.open() as infofile:
                 info = json.load(infofile)
 
+                if 'photographer_latlng' not in info:
+                    continue
+
+                if display:
+                    print(" - ", example.name, end=": ")
+                
                 # retrieve real photographer location
                 real_latlng = info['photographer_latlng']
                 real_easting, real_northing, zone_number, zone_letter = utm.from_latlon(*real_latlng)
@@ -66,7 +69,7 @@ def score(display=False):
                 raise
 
     score = int(total_distance / num)
-    
+
     print("-- Summary --")
     print(num, "cases")
     print("Average error:", score, "meters")
