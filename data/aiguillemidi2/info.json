@@ -34,5 +34,7 @@
 
     "photographer_xy": [464, 276],
 
-    "picture": "photo.jpg" 
+    "picture": "photo.jpg",
+
+    "map": "map.png"
 }
