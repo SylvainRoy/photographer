@@ -36,8 +36,20 @@ Understand how it works:
 
   - Investigation:
 
-    - planpraz
-      - doesn't have a map and xy data
+    - aiguillemidi3 is completely out of the acceptable zone.
+        - brefore change:
+          -- Cases --
+          -  brevent2: 396 meters
+          -  brevent3: 434 meters
+          -  planpraz: 1332 meters
+          -  aiguillemidi2: 623 meters
+          -  aiguillemidi3: 10054 meters
+          -  osterhofen: 502 meters
+          -  statueofliberty: 0 meters
+          -  aiguillemidi1: 694 meters
+          -- Summary --
+          8 cases
+          Average error: 1754 meters
  
  - better handling of situation where the optimization get out of the acceptable zone
     - e.g. maximum 400 km?

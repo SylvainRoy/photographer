@@ -14,12 +14,12 @@ class TestPositionPicture(unittest.TestCase):
             [(-10, 10), (0, 10), (10, 10)], # summits
             [-1, 0, 1],                     # projections
         )
-        self.assertTrue(fabs(res.projections[0][0] - (-1)) < 10 ** -7)
-        self.assertTrue(fabs(res.projections[0][1] - 1) < 10 ** -7)
-        self.assertTrue(fabs(res.projections[1][0] - 0) < 10 ** -7)
-        self.assertTrue(fabs(res.projections[1][1] - 1) < 10 ** -7)
-        self.assertTrue(fabs(res.projections[2][0] - 1) < 10 ** -7)
-        self.assertTrue(fabs(res.projections[2][1] - 1) < 10 ** -7)
+        self.assertAlmostEqual(res.projections[0][0], -1, 7)
+        self.assertAlmostEqual(res.projections[0][1], 1, 7)
+        self.assertAlmostEqual(res.projections[1][0], 0, 7)
+        self.assertAlmostEqual(res.projections[1][1], 1, 7)
+        self.assertAlmostEqual(res.projections[2][0], 1, 7)
+        self.assertAlmostEqual(res.projections[2][1], 1, 7)
 
     def test_diagonal(self):
         res = optimizer.optimize_picture(
@@ -27,13 +27,12 @@ class TestPositionPicture(unittest.TestCase):
             [(100, 400), (400, 400), (300, 100)],   # summits
             [-75 * sqrt(2), 0, 75 * sqrt(2)],       # projections
         )
-        #print(res)
-        self.assertTrue(fabs(res.projections[0][0] - 100) < 10 ** -7)
-        self.assertTrue(fabs(res.projections[0][1] - 250) < 10 ** -7)
-        self.assertTrue(fabs(res.projections[1][0] - 175) < 10 ** -7)
-        self.assertTrue(fabs(res.projections[1][1] - 175) < 10 ** -7)
-        self.assertTrue(fabs(res.projections[2][0] - 250) < 10 ** -7)
-        self.assertTrue(fabs(res.projections[2][1] - 100) < 10 ** -7)
+        self.assertAlmostEqual(res.projections[0][0], 100, 7)
+        self.assertAlmostEqual(res.projections[0][1], 250, 7)
+        self.assertAlmostEqual(res.projections[1][0], 175, 3)
+        self.assertAlmostEqual(res.projections[1][1], 175, 3)
+        self.assertAlmostEqual(res.projections[2][0], 250, 2)
+        self.assertAlmostEqual(res.projections[2][1], 100, 7)
 
     def test_error(self):
         # photographer is on a summit!
@@ -45,8 +44,8 @@ class TestPositionPicture(unittest.TestCase):
         # The projection of the third summit should be on the photographer.
         # And no exception should be thrown.
         # That's all there is too test, really.
-        self.assertTrue(fabs(res.projections[2][0] - 300) == 0)
-        self.assertTrue(fabs(res.projections[2][1] - 100) == 0)
+        self.assertEqual(res.projections[2][0], 300)
+        self.assertEqual(res.projections[2][1], 100)
 
 
 if __name__ == "__main__":

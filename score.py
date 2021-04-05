@@ -11,7 +11,7 @@ import utm
 
 from map import Map
 from tools import distance
-from optimizer import find_photograper_wsg84
+from optimizer import find_photographer_wsg84
 
 
 def score(display=False):
@@ -43,17 +43,21 @@ def score(display=False):
 
                 if display:
                     print(" - ", example.name, end=": ")
-                
+                    
                 # retrieve real photographer location
                 real_latlng = info['photographer_latlng']
                 real_easting, real_northing, zone_number, zone_letter = utm.from_latlon(*real_latlng)
 
                 # compute photographer location
-                computed_latlng, _, _ = find_photograper_wsg84(info['latlngs'],
-                                                               [i[0] for i in info['projections']])
-                computed_easting, computed_northing, _, _ = utm.from_latlon(*computed_latlng,
-                                                                            force_zone_letter=zone_letter,
-                                                                            force_zone_number=zone_number)
+                computed_latlng = find_photographer_wsg84(
+                    info['latlngs'],
+                    [i[0] for i in info['projections']]
+                ).photographer
+                computed_easting, computed_northing, _, _ = utm.from_latlon(
+                    *computed_latlng,
+                    force_zone_letter=zone_letter,
+                    force_zone_number=zone_number
+                )
 
                 delta = int(distance((real_easting, real_northing), (computed_easting, computed_northing)))
                 if display:

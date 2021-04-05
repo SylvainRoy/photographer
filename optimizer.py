@@ -8,9 +8,10 @@ from collections import namedtuple
 from math import fabs, sqrt
 
 import utm
+from numpy import array
 from scipy.optimize import minimize
 
-from tools import barycenter, distance, intersection_lines, photographer_area
+from tools import barycenter, distance, extrems, intersection_lines, photographer_area
 
 
 def compute_projection_on_picture(photographer, summits, alpha, rho=1):
@@ -30,7 +31,9 @@ def compute_projection_on_picture(photographer, summits, alpha, rho=1):
      - s1_ to sN_, the projections of all summits on the picture.
     """
     if photographer is None:
-        raise RuntimeError("photograper position cannot be None")
+        raise RuntimeError("photographer position cannot be None.")
+    if not (0 <= alpha <= 1):
+        raise RuntimeError("Alpha must be in range 0 <= alpha <= 1.")
     p = photographer
     s1, s2toM, sN = summits[0], summits[1:-1], summits[-1]
     # Compute s1_ and sN_, then all intermediate summits
@@ -45,11 +48,11 @@ def compute_projection_on_picture(photographer, summits, alpha, rho=1):
     else:
         s1_ = (
             (1 - rho * alpha) * p[0] + rho * alpha * s1[0],
-            (1 - rho * alpha) * p[1] + rho * alpha * s1[1],
+            (1 - rho * alpha) * p[1] + rho * alpha * s1[1]
         )
         sN_ = (
             (1 - rho * (1 - alpha)) * p[0] + rho * (1 - alpha) * sN[0],
-            (1 - rho * (1 - alpha)) * p[1] + rho * (1 - alpha) * sN[1],
+            (1 - rho * (1 - alpha)) * p[1] + rho * (1 - alpha) * sN[1]
         )
         s2toM_ = [intersection_lines(s1_, sN_, p, x) for x in s2toM]
     # Return list of projection points
@@ -64,8 +67,8 @@ def optimize_picture(photographer, summits, projections):
     Optimize the position of the picture for a given position of the photographer.
     Input:
      - the position of the photographer (p)
-     - the positions of at least three summits on the map
-     - the projections of the summits on the picture
+     - the positions of at least three summits on the map (as viewed from left to right)
+     - the projections of the summits on the picture (from left to right)
     Output:
      - error: the error on the alignment of the summits after optimization
      - alpha/rho: two parameters that define the position of the picture
@@ -73,21 +76,27 @@ def optimize_picture(photographer, summits, projections):
      """
     if photographer is None:
         raise RuntimeError("photographer cannot be None")
+
     # Compute successive normalized distance between real projections
-    deltasref = [abs((i[1] - i[0]) / (projections[-1] - projections[0]))
-                 for i in zip(projections[:-1], projections[1:])]
+    deltasref = [
+        (p - projections[0]) / (projections[-1] - projections[0])
+        for p in projections
+    ]
 
     def errorfun(alpha):
         "Error function to minimize."
-        s_ = compute_projection_on_picture(photographer, summits, alpha)
+        s_ = compute_projection_on_picture(photographer, summits, alpha[0])
         # If a summit doesn't have any projection (picture // with direction
         # of the summit), return max error.
         if None in s_:
             return 999999
         # Compute successive normalized distance between projections
-        deltascur = [distance(i[1], i[0]) / distance(s_[-1], s_[0])
-                     for i in zip(s_[:-1], s_[1:])]
-        # Compute the error: normalized sum of square of diff of the distance
+        left, right = extrems(photographer, s_)
+        deltascur = [
+            distance(left, p) / distance(left, right)
+            for p in s_
+        ]
+        # Compute the error: normalized sum of square of diff of the normalized distance
         error = sum(
             (cur - ref)**2 for cur, ref in zip(deltascur, deltasref)
         )
@@ -99,8 +108,8 @@ def optimize_picture(photographer, summits, projections):
     res = minimize(
         errorfun,
         (0.5,),
-        method="Nelder-Mead", #'SLSQP', #"L-BFGS-B",
-        #bounds=((0, 1),)
+        method='SLSQP',
+        bounds=((0, 1),)
     )
     alpha = res.x[0]
     error = res.fun
@@ -115,10 +124,10 @@ def optimize_picture(photographer, summits, projections):
     return PicturePosition(projections=s__ , alpha=alpha, rho=rho, error=error)
 
 
-PhotographerPosition = namedtuple('PhotographerPosition', ["photographer", "error", "path"])
+PhotographerPosition = namedtuple('PhotographerPosition', ["photographer", "error", "path", "area", "init"])
 
 
-def find_photograper(summits, projections, init=None):
+def find_photographer(summits, projections, init=None):
     """
     Retrieve the position of the photographer.
     Input:
@@ -126,20 +135,22 @@ def find_photograper(summits, projections, init=None):
     - projections: distance of the projections of the summits from the left of the picture
     - init: an optional initial position for the search 
     Output:
-    - The photographer position
-    - The error at the photographer position
-    - The optimisation path
+    - The 'photographer' position
+    - The 'error' at the photographer position
+    - The optimisation 'path'
+    - The 'area' in which the photographer can be located
+    - The 'init' point of the search
     """
     # If no initial position, take the barycenter of the possible of the are
     # where the photographer can be.
+    area = photographer_area(summits)
     if init is None:
-        area = photographer_area(summits)
         init = barycenter(area)
 
     path = []
     def errorfun(position):
         "Error function to minimize."
-        error = optimize_picture(position, summits, projections).error
+        error = optimize_picture(tuple(position), summits, projections).error
         path.append(position)
         return error
 
@@ -149,55 +160,52 @@ def find_photograper(summits, projections, init=None):
         init,
         method="Nelder-Mead"
     )
-    return PhotographerPosition(photographer=res.x, error=res.fun, path=path)
+
+    return PhotographerPosition(photographer=res.x,
+                                error=res.fun, 
+                                path=path, 
+                                area=area, 
+                                init=init)
 
 
-def find_photograper_wsg84(latlngs, projections, init=None):
+def find_photographer_wsg84(latlngs, projections, init=None):
     """
-    Retrieve the position of the photographer.
-    Input:
-    - summits: list of (lat, lng) coordinates (WSG84) of the summits on the map
-    - projections: distance of the projections of the summits from the left of the picture
-    - init: an optional initial position for the search 
-    Output:
-    - The photographer position
-    - The error at the photographer position
-    - The optimisation path
+    Wrapper of find_photographer that uses latlngs in input & output
+    instead of x,y coordinates.
     """
-    # Convert data from WSG84 to UTM.
-    utmdata = [utm.from_latlon(p[0], p[1]) for p in latlngs]
-    utmsummits = [(p[0], p[1]) for p in utmdata]
+    # Determine UTM zone based on first summit.
+    _, _, zone_number, zone_letter = utm.from_latlon(*latlngs[0])
+
+    # Convert input from latlng to xy (i.e. WSG84 to UTM).
+    utmsummits = [
+        utm.from_latlon(*p, zone_number, zone_letter)[:2]
+        for p in latlngs
+    ]
+    utminit = None
     if init is not None:
-        initdata = utm.from_latlon(init[0], init[1])
-        utmdata.append(initdata)
-        init = (initdata[0], initdata[1])
-    # Save UTM zone/letter (and check if it's all in the same zone).
-    zone_numbers = set([d[2] for d in utmdata])
-    zone_letters = set([d[3] for d in utmdata])
-    if len(zone_numbers) != 1 or len(zone_letters) != 1:
-        raise("The summits/init are spread over several UTM zones!")
-    zone_number = zone_numbers.pop()
-    zone_letter = zone_letters.pop()
-    # Run the optimizer to find the photograper
-    utmphotographer, error, utmpath = find_photograper(utmsummits, projections, init) 
-    # Convert back to WSG84
-    photographer = utm.to_latlon(utmphotographer[0], utmphotographer[1], zone_number, zone_letter)
+        utminit = utm.from_latlon(init[0], init[1], zone_number, zone_letter)[:2]
+
+    # Run the optimizer to find the photographer.
+    utmphotographer, error, utmpath, utmarea, utminit = find_photographer(
+        utmsummits, projections, utminit
+    ) 
+
+    # Convert output from xy to latlng (i.e. UTM to WSG84).
+    photographer = utm.to_latlon(
+        *utmphotographer, zone_number, zone_letter, strict=False
+    )
     path = [
-        utm.to_latlon(p[0], p[1], zone_number, zone_letter)
+        utm.to_latlon(*p, zone_number, zone_letter, strict=False)
         for p in utmpath
     ]
-    return PhotographerPosition(photographer=photographer, error=error, path=path)
+    area = [
+        utm.to_latlon(*p, zone_number, zone_letter)
+        for p in utmarea
+    ]
+    init = utm.to_latlon(*utminit, zone_number, zone_letter)
 
-
-def run(map, summits, projections):
-    """
-    Run the optimization and display findings on map.
-    """
-    res = find_photograper(
-        summits=summits,
-        projections=projections
-    )
-    # draw on the map
-    map.draw_path(res.path, color="blue")
-    map.draw_point(res.photographer, name="%.8f" % res.error, color="red")
-    return res
+    return PhotographerPosition(photographer=photographer,
+                                error=error, 
+                                path=path, 
+                                area=area, 
+                                init=init)

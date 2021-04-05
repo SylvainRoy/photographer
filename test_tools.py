@@ -69,6 +69,15 @@ class TestDot(unittest.TestCase):
         self.assertEqual(tools.dot((0, 1), (0, -1)), -1)
 
 
+class TestDet(unittest.TestCase):
+
+    def test_basic(self):
+        self.assertEqual(tools.det((1, 0), (0, 1)), 1)
+        self.assertEqual(tools.det((1, 0), (0, -1)), -1)
+        self.assertEqual(tools.det((1, 0), (1, 0)), 0)
+        self.assertEqual(tools.det((2, 0), (0, 1)), 2)
+
+
 class TestBarycenter(unittest.TestCase):
 
     def test_basic(self):
@@ -76,6 +85,33 @@ class TestBarycenter(unittest.TestCase):
         self.assertEqual(tools.barycenter([(-1, 0), (1, 0), (0, 1), (0, -1)]), (0, 0))
 
 
+class TestExtrems(unittest.TestCase):
+
+    def test_basic(self):
+        self.assertEqual(tools.extrems(
+                            (0,0),
+                            [(-2, 1),(-1, 1),(0, 1),(1, 1),(2, 1)]
+                         ),
+                         ((-2, 1), (2, 1))
+        )
+        self.assertEqual(tools.extrems(
+                            (0,0),
+                            [(-2, -1),(-1, -1),(0, -1),(1, -1),(2, -1)]
+                         ),
+                         ((2, -1), (-2, -1))
+        )
+        self.assertEqual(tools.extrems(
+                            (0,0),
+                            [(-1, 1),(-2, 1),(0, 1),(1, 1),(2, 1)]
+                         ),
+                         ((-2, 1), (2, 1))
+        )
+        self.assertEqual(tools.extrems(
+                            (0,0),
+                            [(-2, -1),(-1, -1),(2, -1),(0, -1),(1, -1)]
+                         ),
+                         ((2, -1), (-2, -1))
+        )
 class TestPhotographerArea(unittest.TestCase):
 
     def test_basic(self):
