@@ -19,7 +19,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from optimizer import find_photograper_wsg84
+from optimizer import find_photographer_wsg84
 
 app = FastAPI()
 
@@ -33,8 +33,8 @@ async def locate(query: Locate):
     """API entry point to locate the photographer."""
     projections = [p[0] for p in query.projections]
     try:
-        location, error, _ = find_photograper_wsg84(query.latlngs, projections)
-        reply = {"location": location, "error": error, "status": "ok"}
+        optimisation = find_photographer_wsg84(query.latlngs, projections)
+        reply = {"location": optimisation.photographer, "error": optimisation.error, "status": "ok"}
     except RuntimeError as e:
         reply = {"status": str(e)}
     print("locate request {} => {}".format(query, reply))

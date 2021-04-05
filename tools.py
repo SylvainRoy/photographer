@@ -32,6 +32,11 @@ def dot(u, v):
     return u[0] * v[0] + u[1] * v[1]
 
 
+def det(u, v):
+    """Return the determinant of two vectors."""
+    return u[0] * v[1] - u[1] * v[0] 
+
+
 def barycenter(points, weights=None):
     """Compute the barycenter of a list of points (that have the same weight)."""
     if weights is None:
@@ -81,6 +86,28 @@ def filter_points_on_the_right(points, vectors):
         if valid:
             envelop.append(p)
     return envelop
+
+
+def extrems(origin, points):
+    """
+    Assuming 'points' are on a line, return the leftmost and rightmost
+    points from the perspective of 'origin'.
+    """
+    # Find the two most extrem points
+    dmax = 0
+    for p in points:
+        for q in points:
+            d = distance(p, q)
+            if d > dmax:
+                dmax = d
+                pp, qq = p, q
+    op = (pp[0] - origin[0], pp[1] - origin[1])
+    oq = (qq[0] - origin[0], qq[1] - origin[1])
+    # Order the points
+    if det(op, oq) <= 0:
+        return pp, qq
+    else:
+        return qq, pp 
 
 
 def find_all_intersections(vectors):
