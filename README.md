@@ -36,20 +36,19 @@ Understand how it works:
 
   - Investigation:
 
-    - aiguillemidi3 is completely out of the acceptable zone.
-        - brefore change:
-          -- Cases --
-          -  brevent2: 396 meters
-          -  brevent3: 434 meters
-          -  planpraz: 1332 meters
-          -  aiguillemidi2: 623 meters
-          -  aiguillemidi3: 10054 meters
-          -  osterhofen: 502 meters
-          -  statueofliberty: 0 meters
-          -  aiguillemidi1: 694 meters
-          -- Summary --
-          8 cases
-          Average error: 1754 meters
+    - locate.ipynb fails miserably for aiguillemidi3 while the same case is ok on the web interface?!
+      - in fact, it 'works' in both case. The issue was that the result of the search is the 'init'. So, on the notebook, it got hidden by the init icon.
+      - Now, it raises a question: how come the search doesn't find anything better?!
+
+    - Fix all notebooks
+      - meta:             ok
+      - sesitivity:       ok
+      - initialisation:   ok
+      - map:              error!
+      - locatelatlngs:    error!
+        - doesn't work for aiguillemidi3 while the web interface works ok.
+
+    - The map latlng to xy feature seems completely broken?!
  
  - better handling of situation where the optimization get out of the acceptable zone
     - e.g. maximum 400 km?
@@ -67,3 +66,55 @@ Understand how it works:
     - Map param:
         - file OR dimension OR nothing(sensible default)
         - y_origin
+
+
+## Score evolution
+
+### 06Apr21
+
+After fix on aiguillemidi3 (the projections were not in order).
+
+-- Cases --
+ -  brevent2: 329 meters
+ -  brevent3: 572 meters
+ -  planpraz: 1315 meters
+ -  aiguillemidi2: 600 meters
+ -  aiguillemidi3: 569 meters
+ -  osterhofen: 558 meters
+ -  statueofliberty: 6 meters
+ -  aiguillemidi1: 688 meters
+-- Summary --
+8 cases
+Average error: 579 meters
+
+### 06Apr21
+
+new optimizer to cope with symmetrical cases like aiguillemidi3.
+
+-- Cases --
+ -  brevent2: 329 meters
+ -  brevent3: 572 meters
+ -  planpraz: 1315 meters
+ -  aiguillemidi2: 600 meters
+ -  aiguillemidi3: 2448 meters
+ -  osterhofen: 558 meters
+ -  statueofliberty: 6 meters
+ -  aiguillemidi1: 688 meters
+-- Summary --
+8 cases
+Average error: 814 meters
+
+### 04Apr21
+
+-- Cases --
+-  brevent2: 396 meters
+-  brevent3: 434 meters
+-  planpraz: 1332 meters
+-  aiguillemidi2: 623 meters
+-  aiguillemidi3: 10054 meters
+-  osterhofen: 502 meters
+-  statueofliberty: 0 meters
+-  aiguillemidi1: 694 meters
+-- Summary --
+8 cases
+Average error: 1754 meters

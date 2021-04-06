@@ -29,7 +29,7 @@ def find_photographer_for_5(summits, projections, init=None):
         counter += 1
         print("%i/%i" % (counter, len(combinations)), end=" ")
         # Find the best position for the photographer
-        photographer, error, path = find_photographer_basic(
+        photographer, error, path, area, init = find_photographer_basic(
             summits=[summits[i] for i in comb],
             projections=[projections[i] for i in comb],
             init=init
