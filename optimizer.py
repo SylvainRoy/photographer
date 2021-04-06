@@ -141,6 +141,10 @@ def find_photographer(summits, projections, init=None):
     - The 'area' in which the photographer can be located
     - The 'init' point of the search
     """
+    if sorted(projections) != projections:
+        raise RuntimeError(
+            "The projections and the summit must be in order from left to right."
+        )
     # If no initial position, take the barycenter of the possible of the are
     # where the photographer can be.
     area = photographer_area(summits)
