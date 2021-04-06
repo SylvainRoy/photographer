@@ -12,6 +12,7 @@ from numpy import array
 from scipy.optimize import minimize
 
 from tools import barycenter, distance, extrems, intersection_lines, photographer_area
+from converter import Converter
 
 
 def compute_projection_on_picture(photographer, summits, alpha, rho=1):
@@ -177,17 +178,12 @@ def find_photographer_wsg84(latlngs, projections, init=None):
     Wrapper of find_photographer that uses latlngs in input & output
     instead of x,y coordinates.
     """
-    # Determine UTM zone based on first summit.
-    _, _, zone_number, zone_letter = utm.from_latlon(*latlngs[0])
-
     # Convert input from latlng to xy (i.e. WSG84 to UTM).
-    utmsummits = [
-        utm.from_latlon(*p, zone_number, zone_letter)[:2]
-        for p in latlngs
-    ]
+    conv = Converter(*latlngs[0])
+    utmsummits = [conv.from_latlng(*p) for p in latlngs]
     utminit = None
     if init is not None:
-        utminit = utm.from_latlon(init[0], init[1], zone_number, zone_letter)[:2]
+        utminit = conv.from_latlng(*init)
 
     # Run the optimizer to find the photographer.
     utmphotographer, error, utmpath, utmarea, utminit = find_photographer(
@@ -195,18 +191,10 @@ def find_photographer_wsg84(latlngs, projections, init=None):
     ) 
 
     # Convert output from xy to latlng (i.e. UTM to WSG84).
-    photographer = utm.to_latlon(
-        *utmphotographer, zone_number, zone_letter, strict=False
-    )
-    path = [
-        utm.to_latlon(*p, zone_number, zone_letter, strict=False)
-        for p in utmpath
-    ]
-    area = [
-        utm.to_latlon(*p, zone_number, zone_letter)
-        for p in utmarea
-    ]
-    init = utm.to_latlon(*utminit, zone_number, zone_letter)
+    photographer = conv.to_latlng(*utmphotographer, strict=False)
+    path = [conv.to_latlng(*p, strict=False) for p in utmpath]
+    area = [conv.to_latlng(*p) for p in utmarea]
+    init = conv.to_latlng(*utminit)
 
     return PhotographerPosition(photographer=photographer,
                                 error=error, 

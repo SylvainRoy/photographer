@@ -34,22 +34,11 @@ Understand how it works:
 
 ## Todo
 
- - better handling of situation where the optimization get out of the acceptable zone
-    - e.g. maximum 400 km?
-
- - remove dead code.
-
  - github repo
     - then, udpate readme & index.html with this info
 
  - deployment in Azure
     - fix CB in Azure
-
- - Improve Map class
-    - Map(basemap|dimensions=200, 200).calibrate(....).draw_XXXX(...).zoom(...).show()
-    - Map param:
-        - file OR dimension OR nothing(sensible default)
-        - y_origin
 
 
 ## Score evolution

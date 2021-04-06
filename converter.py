@@ -9,9 +9,9 @@ import utm
 
 class Converter:
 
-    def __init__(self, init_latlng):
+    def __init__(self, lat, lng):
         _, _, self.zone_number, self.zone_letter = utm.from_latlon(
-            *init_latlng
+            lat, lng
         )
 
     def from_latlng(self, lat, lng):
