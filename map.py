@@ -10,8 +10,6 @@ from matplotlib.pyplot import imshow
 from PIL import Image as PILImage
 from PIL import ImageDraw
 
-from tools import project_on_lens
-
 
 def percentage_to_color(i):
     """Return a color that goes from white to blue based on a percentage."""
@@ -176,15 +174,6 @@ class Map:
             )
             self.draw_point(points[i], color=color)
         self.draw_point(points[i+1], color=color)
-        return self
-
-    def draw_lens(self, lens, summits, photographer, color=0):
-        """Draw projections of summits on lens."""
-        if lens is not None:
-            for (summit, name) in zip(summits, "ABCDEFGHIKLMNOPQRSTUVWXYZ"):
-                projection = project_on_lens(photographer, lens, summit)
-                self.draw_point(projection, name=name + "'", color=color)
-                self.draw_segment(summit, photographer, color=color)
         return self
 
     def grey_out_region(self, testfun):

@@ -28,10 +28,10 @@ class TestPositionPicture(unittest.TestCase):
             [-75 * sqrt(2), 0, 75 * sqrt(2)],       # projections
         )
         self.assertAlmostEqual(res.projections[0][0], 100, 7)
-        self.assertAlmostEqual(res.projections[0][1], 250, 7)
-        self.assertAlmostEqual(res.projections[1][0], 175, 3)
-        self.assertAlmostEqual(res.projections[1][1], 175, 3)
-        self.assertAlmostEqual(res.projections[2][0], 250, 2)
+        self.assertAlmostEqual(res.projections[0][1], 250, 4)
+        self.assertAlmostEqual(res.projections[1][0], 175, 1)
+        self.assertAlmostEqual(res.projections[1][1], 175, 1)
+        self.assertAlmostEqual(res.projections[2][0], 250, 0)
         self.assertAlmostEqual(res.projections[2][1], 100, 7)
 
     def test_error(self):

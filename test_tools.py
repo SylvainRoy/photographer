@@ -267,22 +267,6 @@ class TestSummitsSelection(unittest.TestCase):
         self.assertEqual(ll[20], [2, 3, 4, 5, 6])
 
 
-class TestProjectOnLens(unittest.TestCase):
-
-    def test_basic(self):
-        self.assertEqual(tools.project_on_lens((0, 0), (1, 0), (2, 0)), (1, 0))
-        self.assertEqual(tools.project_on_lens((0, 0), (0, 1), (0, 2)), (0, 1))
-        self.assertEqual(
-            tools.project_on_lens((0.0, 0.0), (0.0, 1.0), (0.0, 2.0)), (0.0, 1.0)
-        )
-        self.assertEqual(
-            tools.project_on_lens((1.0, 1.0), (2.0, 2.0), (3.0, 3.0)), (2.0, 2.0)
-        )
-        self.assertEqual(
-            tools.project_on_lens((1.0, -1.0), (2.0, -2.0), (3.0, -3.0)), (2.0, -2.0)
-        )
-
-
 class TestChangeCoordinate(unittest.TestCase):
 
     def test_basic(self):
