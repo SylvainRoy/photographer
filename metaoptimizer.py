@@ -61,9 +61,9 @@ def run(map, summits, projections):
     for i,  p in enumerate(sortedPositions):
         map.draw_point(
             point=p["photographer"],
-            #name="{}: {}".format(i, 1.0 / p["error"]),
-            color="green"
+            name="{}: {}".format(i, p["error"]),
+            color="blue"
         )
     bary = res.photographer
-    map.draw_point(bary, name="Q", color="red")
+    map.draw_point(bary, name="barycenter", color="red")
     return res

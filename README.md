@@ -34,22 +34,6 @@ Understand how it works:
 
 ## Todo
 
-  - Investigation:
-
-    - locate.ipynb fails miserably for aiguillemidi3 while the same case is ok on the web interface?!
-      - in fact, it 'works' in both case. The issue was that the result of the search is the 'init'. So, on the notebook, it got hidden by the init icon.
-      - Now, it raises a question: how come the search doesn't find anything better?!
-
-    - Fix all notebooks
-      - meta:             ok
-      - sesitivity:       ok
-      - initialisation:   ok
-      - map:              error!
-      - locatelatlngs:    error!
-        - doesn't work for aiguillemidi3 while the web interface works ok.
-
-    - The map latlng to xy feature seems completely broken?!
- 
  - better handling of situation where the optimization get out of the acceptable zone
     - e.g. maximum 400 km?
 
