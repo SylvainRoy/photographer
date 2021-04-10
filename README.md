@@ -3,7 +3,7 @@
 
 ## introduction
 
-Let say you have a picture with at least 5 identified points (e.g. summits) and that you want to determine from which location the picture has been taken, that's what this project does.
+Let say you have a picture with at least 5 identified points (e.g. summits) and that you want to determine from which location the picture has been taken, that's what this project is all about.
 
 
 ## How To
@@ -28,9 +28,6 @@ Build the docker image:
   > poetry export -f requirements.txt -o requirements.txt
   > docker build -t <user/repository> .
 
-Understand how it works:
- - Check the notebook 'locate.ipynb'
-
 
 ## Todo
 
@@ -42,6 +39,25 @@ Understand how it works:
 
 
 ## Score evolution
+
+### 09Apr21
+
+No change of algo but 2 new cases.
+
+-- Cases --
+ -  nurnberg: 13 meters
+ -  brevent2: 329 meters
+ -  brevent3: 572 meters
+ -  planpraz: 1315 meters
+ -  aiguillemidi2: 600 meters
+ -  aiguillemidi3: 569 meters
+ -  frankfurt: 112 meters
+ -  osterhofen: 558 meters
+ -  statueofliberty: 6 meters
+ -  aiguillemidi1: 688 meters
+-- Summary --
+10 cases
+Average error: 476 meters
 
 ### 06Apr21
 
