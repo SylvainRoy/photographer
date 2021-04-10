@@ -46,18 +46,18 @@
         All you need to know is a few points on the picture that you can locate on a map.
     </p>
     <p>
-        If you are not sure what to do, select an example and click on "Locate" below:
+        If you are not sure what to do, select an example and click on "Locate", in step 3, below:
         <select name="examples" id="examples"></select>
     </p>
 
 
     <h2>Step 1 - Load an image and mark known locations</h2>
-    <p>Select a photo and locate at least 3 points that you can locate on the map. Please be as acurate as possible!</p>
+    <p>Select a photo and locate at least 5 points that you can locate on the map. Please be as acurate as possible! The more points, the more accurate the localisation will be.</p>
     <input type="file" name="inpfile" id="inpFile">
     <div id="container"></div>
     
     <h2>Step 2 - Mark same known locations on the map</h2>
-    <p>Locate the same points on the map below.</p>
+    <p>Locate the same points on the map below. Please ensure to match them correctly ('A' on the map must correspond to 'A' on the picture). And, again, please be as accurate as possible.</p>
     <div id="map"></div>
 
     <h2>Step 3:</h2>
@@ -332,8 +332,8 @@
           // Retrieve data from page.
           const projections = markerLayer
               .getChildren()
-              .map(function (marker) {return [c * marker.getPosition().x, c * marker.getPosition().y]})
-              .sort(function (a, b) {return a - b});
+              .sort(function (a, b) {return a.getPosition().x - b.getPosition().x})
+              .map(function (marker) {return [c * marker.getPosition().x, c * marker.getPosition().y]});
           const latlngs = mapMarkers
               .map(function(marker) {return [marker.position.lat(), marker.position.lng()]});
           const payload = {
