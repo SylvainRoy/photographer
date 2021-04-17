@@ -21,21 +21,29 @@ Manually test the API:
 Or with a data file:
   > curl -d "@data.json" -H "Content-Type: application/json" -X POST http://localhost:8000/locate/
 
-Run the docker image:
-  > docker run -p 8000:8000 -d sroy/photographer
-
 Build the docker image:
   > poetry export -f requirements.txt -o requirements.txt
   > docker build -t <user/repository> .
 
+Run the docker image:
+  > docker run -p 8000:8000 -d sroy/photographer
+
+Push it to dockerhub:
+  > docker push sroy/photographer:1
+
 
 ## Todo
 
+ - "url/index.html" should be "url".
+
+ - image in brevent should be without numbers.
+
+ - the newly added 'X' marker should have a different color on the map.
+
+ - when resizing the browser, the picture and marker shoud be resized/repositioned.
+
  - github repo
     - then, udpate readme & index.html with this info
-
- - deployment in Azure
-    - fix CB in Azure
 
 
 ## Score evolution
