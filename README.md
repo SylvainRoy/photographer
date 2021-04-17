@@ -42,9 +42,6 @@ Push it to dockerhub:
 
  - when resizing the browser, the picture and marker shoud be resized/repositioned.
 
- - github repo
-    - then, udpate readme & index.html with this info
-
 
 ## Score evolution
 
