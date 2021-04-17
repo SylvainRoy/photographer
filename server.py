@@ -8,21 +8,23 @@ or
     uvicorn server:app --reload
 """
 
-import os
 import json
-import PIL
-
+import os
 from pathlib import Path
 from typing import List, Tuple
 
-from fastapi import FastAPI
+import PIL
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
 from optimizer import find_photographer_wsg84
 
 app = FastAPI()
 
+templates = Jinja2Templates(directory="static")
 
 class Locate(BaseModel):
     projections: List[Tuple[float, float]] = []
@@ -56,6 +58,13 @@ async def get_example(name: str):
             data["picture_size"] = img.size    
         data["picture"] = dir / data["picture"]
         return data
+
+@app.get("/", response_class=HTMLResponse)
+async def get_index(request: Request):
+    """Main page of webapp."""
+    googlemapkey = os.environ["GOOGLEMAPAPIKEY"]
+    return templates.TemplateResponse("index.html", {"request": request, "googlemapapikey": googlemapkey})
+
 
 app.mount("/data", StaticFiles(directory="data"), name="data")
 app.mount("/", StaticFiles(directory="static"), name="static")
