@@ -61,7 +61,7 @@
     <div id="map"></div>
 
     <h2>Step 3:</h2>
-    <p>well... Just click! A new marker will appear on the map to indicate the computed location of the photographer.</p>
+    <p>well... Just click! A new blue marker will appear on the map to indicate the computed location of the photographer.</p>
     <div ><button onclick="locatePhotographer()">Locate</button></div>
 
     <h2>About this tool</h2>
@@ -327,6 +327,9 @@
     <!-- Calling the server -->
     <script>
 
+      //
+      // Build the Json message based on the picture and map annotations.
+      //
       function buildJsonMessage() {
           // Retrieve img scaling factor to invert it (it helps debuging).
           img = picLayer.getChildren()[0];
@@ -386,7 +389,9 @@
               loc = {lat: data.location[0], lng: data.location[1]};
               var marker = new google.maps.Marker({
                   position: loc,
-                  label: "X",
+                  icon: {
+                    url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png"
+                  },
                   draggable:false,
                   map: map,
               });
