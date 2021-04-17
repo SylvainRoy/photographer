@@ -45,8 +45,10 @@ async def locate(query: Locate):
 @app.get("/examples/")
 async def list_examples():
     """API entry point to get the list of examples."""
-    return [p.name for p in Path("./data").iterdir()
-            if p.joinpath("info.json").exists()]
+    return sorted(
+        [p.name for p in Path("./data").iterdir()
+         if p.joinpath("info.json").exists()]
+    )
 
 @app.get("/examples/{name}")
 async def get_example(name: str):
