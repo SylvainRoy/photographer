@@ -8,3 +8,5 @@ playground.ipynb
 requirements.txt
 static/test.js
 *.xcf
+*.tfstate*
+.terraform*
