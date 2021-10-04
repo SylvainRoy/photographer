@@ -24,6 +24,12 @@ def run(c):
     c.run("uvicorn server:app --reload")
 
 @task
+def query(c):
+    #todo...
+    #> curl -d '{"projections":[[1.2, 2.3], ...], "latlngs":[[1.3, 6.7], ...]}' -H "Content-Type: application/json" -X POST http://localhost:8000/locate/
+    pass
+
+@task
 def build_docker(c):
     for var in ["PHO_GOOGLE_MAP_API_KEY", "PHO_DOCKER_IMAGE_NAME"]:
         if var not in os.environ:
