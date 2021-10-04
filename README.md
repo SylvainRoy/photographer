@@ -14,7 +14,7 @@ Run the unit tests:
   > python -m unittest discover .
 
 Run the server, locally:
-  > export GOOGLEMAPAPIKEY=your_google_map_api_key
+  > export PHO_GOOGLE_MAP_API_KEY=your_google_map_api_key
   > uvicorn server:app --reload
   Then open http://localhost:8000
 
@@ -25,8 +25,8 @@ Or with a data file:
   > curl -d "@data.json" -H "Content-Type: application/json" -X POST http://localhost:8000/locate/
 
 Build the docker image:
-  > export GOOGLEMAPAPIKEY=your_google_map_api_key
-  > docker build --build-arg GOOGLEMAPAPIKEY=${GOOGLEMAPAPIKEY} -t <user/image> .
+  > export PHO_GOOGLE_MAP_API_KEY=your_google_map_api_key
+  > docker build --build-arg PHO_GOOGLE_MAP_API_KEY=${PHO_GOOGLE_MAP_API_KEY} -t <user/image> .
 
 Run the docker image:
   > docker run -p 8000:8000 -d <user/image>

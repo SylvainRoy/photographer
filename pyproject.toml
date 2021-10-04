@@ -22,6 +22,7 @@ jupyter = "^1.0.0"
 matplotlib = "^3.3.4"
 ipython = "^7.20.0"
 folium = "^0.12.1"
+invoke = "^1.6.0"
 
 [build-system]
 requires = ["poetry>=0.12"]

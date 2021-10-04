@@ -64,7 +64,7 @@ async def get_example(name: str):
 @app.get("/", response_class=HTMLResponse)
 async def get_index(request: Request):
     """Main page of webapp."""
-    googlemapkey = os.environ["GOOGLEMAPAPIKEY"]
+    googlemapkey = os.environ["PHO_GOOGLE_MAP_API_KEY"]
     return templates.TemplateResponse("index.html", {"request": request, "googlemapapikey": googlemapkey})
 
 
