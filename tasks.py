@@ -71,12 +71,18 @@ def azure_login(c):
 
 @task
 def azure_deploy(c):
+    if "TF_VAR_PHO_URL" not in os.environ:
+        print(f"Error: You must set the environment variable TF_VAR_PHO_URL")
+        return -1
     c.run("az login")
     c.run("cd terraform/azure && terraform apply")
 
 
 @task
 def azure_url(c):
+    if "TF_VAR_PHO_URL" not in os.environ:
+        print(f"Error: You must set the environment variable TF_VAR_PHO_URL")
+        return -1
     r = c.run("cd terraform/azure && terraform show --json", hide=True)
     j = json.loads(r.stdout)
     url = j["values"]["root_module"]["resources"][0]["values"]["fqdn"]
@@ -85,4 +91,7 @@ def azure_url(c):
 
 @task
 def azure_destroy(c):
+    if "TF_VAR_PHO_URL" not in os.environ:
+        print(f"Error: You must set the environment variable TF_VAR_PHO_URL")
+        return -1
     c.run("cd terraform/azure && terraform destroy")

@@ -23,9 +23,6 @@ And then, run one of them:
 
 ## to do
 
-- The url should be coming from an env variable:
-  - dns_name_label      = "photographer-sroy"
-
 - invoke task should say what to do next:
   - docker_run ==> docker stop ...
 
