@@ -20,14 +20,17 @@ Then, check the various tasks:
 And then, run one of them:
   > invoke unittest
 
+
 ## to do
 
 - The url should be coming from an env variable:
   - dns_name_label      = "photographer-sroy"
 
-- src should be move to a src directory (in another branch...)
-
 - invoke task should say what to do next:
   - docker_run ==> docker stop ...
 
+- invoke inject command
+
 - improve invoke env variable check.
+
+- port should be 80 when in azure

@@ -21,12 +21,12 @@ def score(display=False):
 
     num = 0
     total_distance = 0
-    
+
     if display:
         print("-- Cases --")
 
     # For each example that comes with all needed data
-    data = Path("data")
+    data = Path("./data")
     for example in data.iterdir():
 
         infojson = example.joinpath('info.json')
@@ -43,7 +43,7 @@ def score(display=False):
 
                 if display:
                     print(" - ", example.name, end=": ")
-                    
+
                 # retrieve real photographer location
                 real_latlng = info['photographer_latlng']
                 real_easting, real_northing, zone_number, zone_letter = utm.from_latlon(*real_latlng)
@@ -81,4 +81,3 @@ def score(display=False):
 
 if __name__ == '__main__':
     score(display=True)
-

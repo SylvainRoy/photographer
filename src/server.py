@@ -24,7 +24,7 @@ from optimizer import find_photographer_wsg84
 
 app = FastAPI()
 
-templates = Jinja2Templates(directory="static")
+templates = Jinja2Templates(directory="./static")
 
 class Locate(BaseModel):
     projections: List[Tuple[float, float]] = []
@@ -41,7 +41,7 @@ async def locate(query: Locate):
         reply = {"status": str(e)}
     print("locate request {} => {}".format(query, reply))
     return reply
- 
+
 @app.get("/examples/")
 async def list_examples():
     """API entry point to get the list of examples."""
@@ -57,7 +57,7 @@ async def get_example(name: str):
     with dir.joinpath("info.json").open() as info:
         data = json.load(info)
         with PIL.Image.open(dir / data["picture"]) as img:
-            data["picture_size"] = img.size    
+            data["picture_size"] = img.size
         data["picture"] = dir / data["picture"]
         return data
 
@@ -68,5 +68,5 @@ async def get_index(request: Request):
     return templates.TemplateResponse("index.html", {"request": request, "googlemapapikey": googlemapkey})
 
 
-app.mount("/data", StaticFiles(directory="data"), name="data")
-app.mount("/", StaticFiles(directory="static"), name="static")
+app.mount("/data", StaticFiles(directory="./data"), name="data")
+app.mount("/", StaticFiles(directory="./static"), name="static")
