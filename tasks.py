@@ -3,6 +3,7 @@
 import os
 import json
 import sys
+import requests
 
 from invoke import task
 
@@ -35,10 +36,22 @@ def run(c):
 
 
 @task
-def query(c):
-    #todo...
-    #> curl -d '{"projections":[[1.2, 2.3], ...], "latlngs":[[1.3, 6.7], ...]}' -H "Content-Type: application/json" -X POST http://localhost:8000/locate/
-    pass
+def query(c, url='http://localhost:8000/locate/', query=None):
+    if query is None:
+        query = {"projections": [[1214.379914313618,1096.0557175343424],
+                                 [1806.000898209996,1164.5591998802386],
+                                 [2497.2633109731323,1158.3316105760662],
+                                 [3568.4086712907847,946.5935742342047],
+                                 [4595.960906479231,1033.7798244926182]],
+                 "latlngs":[[45.9169134,7.0246497],
+                            [45.8999213,7.0040026],
+                            [45.8874995,7.0069444],
+                            [45.8688259,6.9879852],
+                            [45.8622473,6.9518381]]}
+        query = json.dumps(query)
+    print(f"\nQuery:\n{query}")
+    r = requests.post(url, data=query)
+    print(f"\nReply:\n{r.text}\n")
 
 
 @task
@@ -50,7 +63,7 @@ def docker_build(c):
 @task
 def docker_run(c):
     check_env_var(["PHO_DOCKER_IMAGE_NAME"])
-    c.run("docker run -p 8000:8000 -d ${PHO_DOCKER_IMAGE_NAME}")
+    c.run("docker run -p 8000:80 -d ${PHO_DOCKER_IMAGE_NAME}")
 
 
 @task
@@ -69,7 +82,7 @@ def azure_deploy(c):
     check_env_var(["TF_VAR_PHO_URL"])
     c.run("az login")
     c.run("cd terraform/azure && terraform apply")
-
+    azure_url(c)
 
 @task
 def azure_url(c):
@@ -77,7 +90,7 @@ def azure_url(c):
     r = c.run("cd terraform/azure && terraform show --json", hide=True)
     j = json.loads(r.stdout)
     url = j["values"]["root_module"]["resources"][0]["values"]["fqdn"]
-    print(f"{url}")
+    print(f"\nThe website is available at his url:\n\n  {url}")
 
 
 @task

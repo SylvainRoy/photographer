@@ -38,7 +38,7 @@ resource "azurerm_container_group" "photographer" {
     memory = "1.5"
 
     ports {
-      port     = 8000
+      port     = 80
       protocol = "TCP"
     }
   }
