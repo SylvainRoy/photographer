@@ -2,17 +2,21 @@
 
 import os
 import json
+import sys
 
 from invoke import task
 
 
 @task
-def check(c):
-    if "PHO_GOOGLE_MAP_API_KEY" not in os.environ:
-        print("- environment variable PHO_GOOGLE_MAP_API_KEY is not set!")
-    if "PHO_DOCKER_IMAGE_NAME" not in os.environ:
-        print("- environment variable PHO_DOCKER_IMAGE_NAME is not set!")
-
+def check_env(c):
+    check_env_var(
+        [
+            "PHO_GOOGLE_MAP_API_KEY",
+            "PHO_DOCKER_IMAGE_NAME",
+            "TF_VAR_PHO_URL"
+        ],
+        exit_on_error=False
+    )
 
 @task
 def unittest(c):
@@ -26,9 +30,7 @@ def score(c):
 
 @task
 def run(c):
-    if "PHO_GOOGLE_MAP_API_KEY" not in os.environ:
-        print("Error: You must set the environment variable PHO_GOOGLE_MAP_API_KEY")
-        return
+    check_env_var(["PHO_GOOGLE_MAP_API_KEY"])
     c.run("uvicorn --app-dir ./src server:app --reload")
 
 
@@ -41,26 +43,19 @@ def query(c):
 
 @task
 def docker_build(c):
-    for var in ["PHO_GOOGLE_MAP_API_KEY", "PHO_DOCKER_IMAGE_NAME"]:
-        if var not in os.environ:
-            print(f"Error: You must set the environment variable {var}")
-            return -1
+    check_env_var(["PHO_DOCKER_IMAGE_NAME", "PHO_GOOGLE_MAP_API_KEY"])
     c.run("docker build --build-arg PHO_GOOGLE_MAP_API_KEY=${PHO_GOOGLE_MAP_API_KEY} -t ${PHO_DOCKER_IMAGE_NAME} .")
 
 
 @task
 def docker_run(c):
-    if "PHO_DOCKER_IMAGE_NAME" not in os.environ:
-        print(f"Error: You must set the environment variable PHO_DOCKER_IMAGE_NAME")
-        return -1
+    check_env_var(["PHO_DOCKER_IMAGE_NAME"])
     c.run("docker run -p 8000:8000 -d ${PHO_DOCKER_IMAGE_NAME}")
 
 
 @task
 def docker_push(c):
-    if "PHO_DOCKER_IMAGE_NAME" not in os.environ:
-        print(f"Error: You must set the environment variable PHO_DOCKER_IMAGE_NAME")
-        return -1
+    check_env_var(["PHO_DOCKER_IMAGE_NAME"])
     c.run("docker push ${PHO_DOCKER_IMAGE_NAME}")
 
 
@@ -71,27 +66,31 @@ def azure_login(c):
 
 @task
 def azure_deploy(c):
-    if "TF_VAR_PHO_URL" not in os.environ:
-        print(f"Error: You must set the environment variable TF_VAR_PHO_URL")
-        return -1
+    check_env_var(["TF_VAR_PHO_URL"])
     c.run("az login")
     c.run("cd terraform/azure && terraform apply")
 
 
 @task
 def azure_url(c):
-    if "TF_VAR_PHO_URL" not in os.environ:
-        print(f"Error: You must set the environment variable TF_VAR_PHO_URL")
-        return -1
+    check_env_var(["TF_VAR_PHO_URL"])
     r = c.run("cd terraform/azure && terraform show --json", hide=True)
     j = json.loads(r.stdout)
     url = j["values"]["root_module"]["resources"][0]["values"]["fqdn"]
-    print(f"{url}:8000")
+    print(f"{url}")
 
 
 @task
 def azure_destroy(c):
-    if "TF_VAR_PHO_URL" not in os.environ:
-        print(f"Error: You must set the environment variable TF_VAR_PHO_URL")
-        return -1
+    check_env_var(["TF_VAR_PHO_URL"])
     c.run("cd terraform/azure && terraform destroy")
+
+
+def check_env_var(variables, exit_on_error=True):
+    ok = True
+    for var in variables:
+        if var not in os.environ:
+            print(f"- {var} environmnent variable is not set")
+            ok = False
+    if not ok:
+        sys.exit(1)
