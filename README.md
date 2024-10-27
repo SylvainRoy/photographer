@@ -9,10 +9,10 @@ Let say you have a picture with at least 5 identified points (e.g. summits) and 
 ## How To
 
 Run the unit tests:
-  > python -m unittest discover .
+  > uv run -m unittest discover .
 
 Run the server, locally:
-  > uvicorn server:app --reload
+  > uv run uvicorn server:app --reload
   Then open http://localhost:8000/index.html
 
 Manually test the API:
