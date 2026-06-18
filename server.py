@@ -16,10 +16,28 @@ from pathlib import Path
 from typing import List, Tuple
 
 from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from optimizer import find_photographer_wsg84
+
+
+def _load_dotenv(path=".env"):
+    """Minimal .env loader so secrets can stay out of the source tree and out
+    of git. Existing environment variables take precedence."""
+    env_file = Path(path)
+    if not env_file.exists():
+        return
+    for line in env_file.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
+
+
+_load_dotenv()
 
 app = FastAPI()
 
@@ -56,6 +74,17 @@ async def get_example(name: str):
             data["picture_size"] = img.size    
         data["picture"] = dir / data["picture"]
         return data
+
+@app.get("/", response_class=HTMLResponse)
+@app.get("/index.html", response_class=HTMLResponse)
+async def index():
+    """Serve index.html with the Google Maps API key injected from the
+    environment, so the key never lives in the source tree."""
+    html = Path("static/index.html").read_text()
+    api_key = os.environ.get("GOOGLE_MAPS_API_KEY", "")
+    if not api_key:
+        print("WARNING: GOOGLE_MAPS_API_KEY is not set; the map will not load.")
+    return html.replace("{{GOOGLE_MAPS_API_KEY}}", api_key)
 
 app.mount("/data", StaticFiles(directory="data"), name="data")
 app.mount("/", StaticFiles(directory="static"), name="static")
