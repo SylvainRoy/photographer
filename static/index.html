@@ -3,9 +3,16 @@
   <head>
     <title>Where was the photographer?</title>
 
-    <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
     <script src="https://unpkg.com/konva@7.2.3/konva.min.js"></script>
-    <script src="https://maps.googleapis.com/maps/api/js?key={{GOOGLE_MAPS_API_KEY}}&callback=initMap&libraries=&v=weekly" defer></script>
+
+    <!-- Google Maps JavaScript API - dynamic library import (bootstrap loader). -->
+    <!-- Libraries are loaded on demand via google.maps.importLibrary() in initMap(). -->
+    <script>
+      (g=>{var h,a,k,p="The Google Maps JavaScript API",c="google",l="importLibrary",q="__ib__",m=document,b=window;b=b[c]||(b[c]={});var d=b.maps||(b.maps={}),r=new Set,e=new URLSearchParams,u=()=>h||(h=new Promise(async(f,n)=>{await (a=m.createElement("script"));e.set("libraries",[...r]+"");for(k in g)e.set(k.replace(/[A-Z]/g,t=>"_"+t[0].toLowerCase()),g[k]);e.set("callback",c+".maps."+q);a.src=`https://maps.${c}apis.com/maps/api/js?`+e;d[q]=f;a.onerror=()=>h=n(Error(p+" could not load."));a.nonce=m.querySelector("script[nonce]")?.nonce||"";m.head.append(a)}));d[l]?console.warn(p+" only loads once. Ignoring:",g):d[l]=(f,...n)=>r.add(f)&&u().then(()=>d[l](f,...n))})({
+        key: "{{GOOGLE_MAPS_API_KEY}}",
+        v: "weekly",
+      });
+    </script>
 
     <meta charset="utf-8" />
 
@@ -253,38 +260,70 @@
     <script>
       var map;
       var mapMarkers = []; // the list of markers added on the map
-            
+      // Library classes, resolved asynchronously in initMap().
+      var AdvancedMarkerElement, PinElement;
+
+      //
+      // Returns the latitude of a position that may be a LatLng (with lat()/lng()
+      // methods) or a plain LatLngLiteral ({lat, lng}).
+      //
+      function latOf(position) {
+        return typeof position.lat === "function" ? position.lat() : position.lat;
+      }
+      function lngOf(position) {
+        return typeof position.lng === "function" ? position.lng() : position.lng;
+      }
+
       //
       // Init the map
       //
-      function initMap() {
-        map = new google.maps.Map(document.getElementById("map"), {
+      async function initMap() {
+        const { Map } = await google.maps.importLibrary("maps");
+        ({ AdvancedMarkerElement, PinElement } = await google.maps.importLibrary("marker"));
+        map = new Map(document.getElementById("map"), {
           zoom: 12,
           center: { lat: 45.83550785027975, lng: 6.863880441774906 },
+          mapId: "DEMO_MAP_ID", // A Map ID is required for advanced markers.
         });
         // Add a marker when the map is clicked.
-        google.maps.event.addListener(map, "click", (event) => {
-          addMapMarker(event.latLng, map);
+        map.addListener("click", (event) => {
+          addMapMarker(event.latLng);
         });
       }
-      
+
+      //
+      // Builds a labelled pin element for use as advanced marker content.
+      //
+      function makePin(label) {
+        return new PinElement({ glyphText: label, glyphColor: "white" });
+      }
+
+      //
+      // Sets a marker's label and (re)wires the right-click-to-delete handler.
+      // The content element is replaced when relabelling, so the listener is
+      // attached every time.
+      //
+      function setMapMarkerLabel(marker, label) {
+        const pin = makePin(label);
+        marker.content = pin;
+        pin.addEventListener("contextmenu", (event) => {
+          event.preventDefault();
+          removeMapMarker(marker);
+        });
+      }
+
       //
       // Adds a marker to the map.
       //
       function addMapMarker(location) {
-        var marker = new google.maps.Marker({
+        const marker = new AdvancedMarkerElement({
           position: location,
-          label: "Z",
-          draggable:true,
+          gmpDraggable: true,
           map: map,
-        });
-        // Right click on marker deletes it.
-        marker.addListener("contextmenu", function(event) {
-          removeMapMarker(this);
         });
         // Register marker.
         mapMarkers.push(marker);
-        // Ensure they are named in contiguous alpha order
+        // Ensure they are named in contiguous alpha order (also sets the label).
         renameMapMarkers();
       }
 
@@ -295,7 +334,7 @@
         mapMarkers = mapMarkers.filter(function(item) {
           return item !== marker;
         });
-        marker.setMap(null);
+        marker.map = null;
         renameMapMarkers();
       }
 
@@ -304,7 +343,7 @@
       //
       function removeAllMapMarkers() {
         mapMarkers.forEach(marker => {
-          marker.setMap(null);
+          marker.map = null;
         });
         mapMarkers = [];
       }
@@ -316,9 +355,12 @@
         let i = 0;
         const labels = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         mapMarkers.forEach(marker => {
-          marker.setLabel(labels[i++]);          
+          setMapMarkerLabel(marker, labels[i++]);
         });
       }
+
+      // Kick off map initialisation.
+      initMap();
 
     </script>
 
@@ -335,7 +377,7 @@
               .sort(function (a, b) {return a.getPosition().x - b.getPosition().x})
               .map(function (marker) {return [c * marker.getPosition().x, c * marker.getPosition().y]});
           const latlngs = mapMarkers
-              .map(function(marker) {return [marker.position.lat(), marker.position.lng()]});
+              .map(function(marker) {return [latOf(marker.position), lngOf(marker.position)]});
           const payload = {
               projections: projections,
               latlngs: latlngs
@@ -382,19 +424,16 @@
               }
               // Add a marker at the photographer location.
               loc = {lat: data.location[0], lng: data.location[1]};
-              var marker = new google.maps.Marker({
+              const photographerPin = makePin("X");
+              const marker = new AdvancedMarkerElement({
                   position: loc,
-                  label: "X",
-                  draggable:false,
+                  content: photographerPin,
                   map: map,
               });
               // Right click on marker deletes it.
-              marker.addListener("contextmenu", function(event) {
-                  m = this;
-                  mapMarkers = mapMarkers.filter(function(item) {
-                      return item !== m;
-                  });
-                  this.setMap(null);
+              photographerPin.addEventListener("contextmenu", (event) => {
+                  event.preventDefault();
+                  marker.map = null;
               });
               // Center map on photographer.
               map.setCenter(loc)
