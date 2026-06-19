@@ -277,6 +277,19 @@
       .pt-chip.partial .pt-letter { background: var(--warning-text); }
       .pt-dot { color: var(--text-faint); }
       .pt-dot.on { color: var(--success-text); font-weight: 600; }
+      .pt-remove {
+        font: inherit;
+        font-size: 16px;
+        line-height: 1;
+        padding: 0 3px;
+        margin-left: 2px;
+        border: none;
+        background: transparent;
+        color: var(--text-faint);
+        cursor: pointer;
+        border-radius: 4px;
+      }
+      .pt-remove:hover { color: var(--danger-text); border-color: transparent; filter: none; }
 
       .actions {
         display: flex;
@@ -495,6 +508,8 @@
                 '<span class="pt-letter">' + POINT_LABELS[i] + "</span>" +
                 '<span class="pt-dot ' + (onPic ? "on" : "off") + '">photo</span>' +
                 '<span class="pt-dot ' + (onMap ? "on" : "off") + '">map</span>' +
+                '<button class="pt-remove" type="button" title="Remove point ' + POINT_LABELS[i] +
+                  '" aria-label="Remove point ' + POINT_LABELS[i] + '" onclick="removePoint(' + i + ')">&times;</button>' +
               "</span>";
           }
           panel.innerHTML = html;
@@ -990,6 +1005,29 @@
               console.error('Error:', error);
               showToast("Could not reach the server. Please try again.", "error");
           });
+      }
+
+      //
+      // Remove a paired point by index: deletes the matching picture marker
+      // (the i-th from the left) and the matching map marker (the i-th added),
+      // whichever exist. The remaining markers are then re-labelled.
+      //
+      function removePoint(i) {
+        const picSorted = markerLayer.getChildren().slice(0).sort(function (a, b) {
+          return a.x() - b.x();
+        });
+        if (i < picSorted.length) {
+          picSorted[i].destroy();
+        }
+        if (i < mapMarkers.length) {
+          const marker = mapMarkers[i];
+          mapMarkers = mapMarkers.filter(function (m) { return m !== marker; });
+          marker.map = null;
+        }
+        renamePictureMarkers();
+        renameMapMarkers();
+        markerLayer.draw();
+        updateStatus();
       }
 
       //
