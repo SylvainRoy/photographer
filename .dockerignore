@@ -1,0 +1,16 @@
+# Keep the build context small and free of secrets / local cruft.
+.git
+.gitignore
+.venv
+__pycache__
+*.pyc
+.env
+.env.example
+.ropeproject
+.vscode
+.DS_Store
+.claude
+notebooks
+requirements.txt
+Dockerfile
+README.md

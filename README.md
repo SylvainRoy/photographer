@@ -32,17 +32,17 @@ Or with a data file:
 curl -d "@data.json" -H "Content-Type: application/json" -X POST http://localhost:8000/locate/
 ```
 
-Run the docker image:
-
-```sh
-docker run -p 8000:8000 -d sroy/photographer
-```
-
 Build the docker image:
 
 ```sh
-uv export --format requirements.txt -o requirements.txt
 docker build -t <user/repository> .
+```
+
+Run the docker image (the Google Maps API key is passed at runtime, never baked
+into the image):
+
+```sh
+docker run -p 8000:8000 -e GOOGLE_MAPS_API_KEY=your-key-here -d <user/repository>
 ```
 
 ## Score evolution
