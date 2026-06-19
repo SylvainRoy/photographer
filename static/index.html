@@ -137,6 +137,20 @@
       }
       select { cursor: pointer; }
 
+      .photo-input { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+      .file-button {
+        font: inherit;
+        font-weight: 500;
+        cursor: pointer;
+        border-radius: var(--radius-sm);
+        padding: 8px 16px;
+        border: 1px solid var(--border-strong);
+        background: var(--surface);
+        color: var(--text);
+      }
+      .file-button:hover { border-color: var(--accent); }
+      .file-status { font-size: 13px; color: var(--text-muted); }
+
       .card {
         background: var(--surface);
         border: 1px solid var(--border);
@@ -411,7 +425,11 @@
           <p class="desc">
             Choose a photo, then click recognisable points. Click to add, right-click to remove, drag to fine-tune.
           </p>
-          <input type="file" name="inpfile" id="inpFile" accept="image/*">
+          <div class="photo-input">
+            <input type="file" name="inpfile" id="inpFile" accept="image/*" hidden>
+            <label class="file-button" for="inpFile">Choose a photo</label>
+            <span class="file-status" id="photoStatus">No photo loaded</span>
+          </div>
           <div class="pane-body"><div id="container"></div></div>
         </section>
 
@@ -635,6 +653,8 @@
           setPicture(this.result);
         });
         reader.readAsDataURL(file);
+        // Reflect the chosen file in the status text.
+        document.getElementById("photoStatus").textContent = file.name;
       });
 
       //
@@ -1059,6 +1079,9 @@
           }
           document.getElementById("result").style.display = "none";
           document.getElementById("examples").value = "--";
+          // Reset the file picker and its status.
+          inpFile.value = "";
+          document.getElementById("photoStatus").textContent = "No photo loaded";
           updateStatus();
       }
     </script>
@@ -1112,6 +1135,10 @@
           // Remove markers on picture & map
           removeAllPicturesMarkers();
           removeAllMapMarkers();
+          // An example is loaded, not a chosen file: clear the file input and
+          // reflect the example name in the status text.
+          inpFile.value = "";
+          document.getElementById("photoStatus").textContent = "Example: " + example;
           // Display the picture, then add its markers once it is fitted so they
           // are scaled against the final stage size.
           setPicture(data.picture, function () {
