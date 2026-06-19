@@ -834,6 +834,23 @@
       }
 
       //
+      // Builds the distinctive pin for the computed photographer location: a
+      // larger blue pin (vs. the red reference pins) carrying a camera glyph.
+      //
+      function makePhotographerPin() {
+        const camera = document.createElement("span");
+        camera.innerHTML =
+          '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="15" height="15" fill="white" aria-hidden="true">' +
+          '<path d="M9 3l-1.8 2H4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-3.2L15 3H9zm3 5a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9z"/>' +
+          "</svg>";
+        return new PinElement({
+          background: "#1a73e8",
+          borderColor: "#0b57d0",
+          glyph: camera,
+        });
+      }
+
+      //
       // Sets a marker's label and (re)wires the right-click-to-delete handler.
       // The content element is replaced when relabelling, so the listener is
       // attached every time.
@@ -984,7 +1001,7 @@
               if (photographerMarker) {
                   photographerMarker.map = null;
               }
-              const photographerPin = makePin("X");
+              const photographerPin = makePhotographerPin();
               photographerMarker = new AdvancedMarkerElement({
                   position: loc,
                   content: photographerPin,
