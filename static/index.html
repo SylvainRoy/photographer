@@ -1,7 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <title>Where was the photographer?</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <script src="https://unpkg.com/konva@7.2.3/konva.min.js"></script>
 
@@ -14,83 +16,388 @@
       });
     </script>
 
-    <meta charset="utf-8" />
+    <style>
+      :root {
+        --bg: #f4f5f7;
+        --surface: #ffffff;
+        --surface-2: #f0f1f4;
+        --border: #e2e4e9;
+        --border-strong: #cfd2da;
+        --text: #1c1f26;
+        --text-muted: #5f6571;
+        --text-faint: #8a909c;
+        --accent: #2563eb;
+        --accent-text: #ffffff;
+        --success-bg: #e7f6ee;
+        --success-text: #0f7a45;
+        --warning-text: #9a6a00;
+        --danger-bg: #fdeaea;
+        --danger-text: #b42318;
+        --radius: 12px;
+        --radius-sm: 8px;
+        --shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.08);
+      }
 
-    <style type="text/css">
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0f1115;
+          --surface: #181b21;
+          --surface-2: #21252d;
+          --border: #2a2f39;
+          --border-strong: #3a4150;
+          --text: #e8eaed;
+          --text-muted: #a3a9b5;
+          --text-faint: #777e8b;
+          --accent: #4f86f7;
+          --success-bg: #14301f;
+          --success-text: #6ee7a8;
+          --danger-bg: #3a1614;
+          --danger-text: #f3a39a;
+          --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.35);
+        }
+      }
+
+      * { box-sizing: border-box; }
+
+      html, body {
+        margin: 0;
+        padding: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      a { color: var(--accent); }
+
+      .page {
+        max-width: 920px;
+        margin: 0 auto;
+        padding: 24px 20px 64px;
+      }
+
+      header.app {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 8px;
+      }
+
+      header.app h1 {
+        font-size: 26px;
+        font-weight: 650;
+        margin: 0;
+        letter-spacing: -0.02em;
+      }
+
+      header.app p.lead {
+        margin: 4px 0 0;
+        color: var(--text-muted);
+        font-size: 15px;
+        max-width: 620px;
+      }
+
+      .ghlink {
+        flex: none;
+        font-size: 14px;
+        text-decoration: none;
+        color: var(--text-muted);
+        border: 1px solid var(--border);
+        background: var(--surface);
+        border-radius: var(--radius-sm);
+        padding: 7px 12px;
+        white-space: nowrap;
+      }
+      .ghlink:hover { border-color: var(--border-strong); color: var(--text); }
+
+      .example-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 12px 16px;
+        margin: 18px 0 24px;
+        box-shadow: var(--shadow);
+      }
+      .example-bar label { font-size: 14px; color: var(--text-muted); }
+      .example-bar .hint { font-size: 13px; color: var(--text-faint); margin-left: auto; }
+
+      select, input[type="file"] {
+        font: inherit;
+        color: var(--text);
+        background: var(--surface);
+        border: 1px solid var(--border-strong);
+        border-radius: var(--radius-sm);
+        padding: 7px 10px;
+      }
+      select { cursor: pointer; }
+
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: var(--shadow);
+      }
+
+      .card-head {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 6px;
+      }
+      .step-num {
+        flex: none;
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: var(--accent);
+        color: var(--accent-text);
+        font-size: 14px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .card-head h2 { font-size: 17px; font-weight: 600; margin: 0; }
+      .count-badge {
+        margin-left: auto;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-muted);
+        background: var(--surface-2);
+        border-radius: 20px;
+        padding: 3px 12px;
+      }
+      .card p.desc { margin: 0 0 14px; color: var(--text-muted); font-size: 14px; }
 
       #container {
-        border-style: solid;
         width: 100%;
-        margin-left: auto;
-        margin-right: auto;
+        min-height: 90px;
+        border: 1px dashed var(--border-strong);
+        border-radius: var(--radius-sm);
+        background: var(--surface-2);
+        margin-top: 12px;
       }
 
       #map {
-          height: 60%;
-          width: 100%;
-          margin-left: auto;
-          margin-right: auto;
-          border-style: solid;
+        height: 440px;
+        width: 100%;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border);
+        margin-top: 4px;
       }
 
-      html,
-      body {
-          height: 90%;
-          background-color: #f0f0f0;
-          /* margin: 0; */
-          /* padding: 0; */
+      .actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
       }
+      button {
+        font: inherit;
+        font-weight: 500;
+        cursor: pointer;
+        border-radius: var(--radius-sm);
+        padding: 10px 18px;
+        border: 1px solid var(--border-strong);
+        background: var(--surface);
+        color: var(--text);
+        transition: transform 0.05s ease;
+      }
+      button:hover { border-color: var(--accent); }
+      button:active { transform: scale(0.98); }
+      button.primary {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: var(--accent-text);
+      }
+      button.primary:hover { filter: brightness(1.05); }
+      .actions .status { font-size: 13px; color: var(--text-muted); margin-left: auto; }
 
+      #result {
+        display: none;
+        align-items: center;
+        gap: 20px;
+        flex-wrap: wrap;
+        background: var(--success-bg);
+        border: 1px solid transparent;
+        border-radius: var(--radius);
+        padding: 16px 20px;
+        margin-bottom: 20px;
+      }
+      #result .result-label { font-size: 13px; color: var(--text-muted); margin: 0; }
+      #result .coords {
+        font-size: 19px;
+        font-weight: 600;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        margin: 2px 0 0;
+        color: var(--text);
+      }
+      #result .accuracy {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--success-text);
+        background: var(--surface);
+        border-radius: 20px;
+        padding: 4px 12px;
+      }
+      #result a.maps-link { margin-left: auto; }
+
+      .about h2 { font-size: 17px; font-weight: 600; margin: 0 0 8px; }
+      .about p { font-size: 14px; color: var(--text-muted); margin: 0 0 10px; }
+
+      #toasts {
+        position: fixed;
+        top: 16px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        z-index: 9999;
+        width: max-content;
+        max-width: 90vw;
+      }
+      .toast {
+        background: var(--surface);
+        color: var(--text);
+        border: 1px solid var(--border-strong);
+        border-left: 4px solid var(--accent);
+        border-radius: var(--radius-sm);
+        padding: 11px 16px;
+        font-size: 14px;
+        box-shadow: var(--shadow);
+        animation: toast-in 0.18s ease;
+      }
+      .toast.error { border-left-color: var(--danger-text); }
+      .toast.success { border-left-color: var(--success-text); }
+      @keyframes toast-in {
+        from { opacity: 0; transform: translateY(-8px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
     </style>
   </head>
   <body>
+    <div id="toasts"></div>
 
-    <center><h1>Where was the photographer?</h1></center>
+    <div class="page">
+      <header class="app">
+        <div>
+          <h1>Where was the photographer?</h1>
+          <p class="lead">
+            Find the spot a photo was taken from. Mark a few points you can recognise
+            both on the picture and on the map — the more points and the more precise,
+            the better the result.
+          </p>
+        </div>
+        <a class="ghlink" href="https://github.com/sroy/photographer" target="_blank" rel="noopener">View on GitHub</a>
+      </header>
 
-    <h2>Introduction</h2>
-    <p>
-        This small tool helps you find the location from which a picture has been taken.
-        All you need to know is a few points on the picture that you can locate on a map.
-    </p>
-    <p>
-        If you are not sure what to do, select an example and click on "Locate", in step 3, below:
+      <div class="example-bar">
+        <label for="examples">New here? Try an example:</label>
         <select name="examples" id="examples"></select>
-    </p>
+        <span class="hint">Loads a picture and map points, then just hit Locate.</span>
+      </div>
+
+      <section class="card">
+        <div class="card-head">
+          <span class="step-num">1</span>
+          <h2>Mark known points on the picture</h2>
+          <span class="count-badge" id="picCount">0 points</span>
+        </div>
+        <p class="desc">
+          Choose a photo, then click at least 5 recognisable points (summits, towers, corners…).
+          Click to add, right-click a marker to remove it, drag to fine-tune.
+        </p>
+        <input type="file" name="inpfile" id="inpFile" accept="image/*">
+        <div id="container"></div>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <span class="step-num">2</span>
+          <h2>Mark the same points on the map</h2>
+          <span class="count-badge" id="mapCount">0 points</span>
+        </div>
+        <p class="desc">
+          Place the matching points on the map — 'A' on the map must be the same place as 'A'
+          on the picture. Click to add, right-click to remove, drag to adjust.
+        </p>
+        <div id="map"></div>
+      </section>
+
+      <div id="result">
+        <div>
+          <p class="result-label">Estimated photographer location</p>
+          <p class="coords" id="resultCoords">—</p>
+        </div>
+        <span class="accuracy" id="resultAccuracy"></span>
+        <a class="maps-link" id="resultMapsLink" target="_blank" rel="noopener">Open in Google Maps ↗</a>
+      </div>
+
+      <section class="card">
+        <div class="actions">
+          <button class="primary" onclick="locatePhotographer()">Locate photographer</button>
+          <button onclick="resetAll()">Reset</button>
+          <span class="status" id="statusMsg">Place at least 3 matching points on both sides.</span>
+        </div>
+      </section>
+
+      <section class="card about">
+        <h2>About this tool</h2>
+        <p>
+          Worried about privacy? Only the coordinates of the points — on the picture (x, y)
+          and on the map (latitude, longitude) — are sent to the server. The picture itself
+          never leaves your browser.
+        </p>
+        <p>
+          This is an open-source toy project. The server that computes the location exposes a
+          JSON API you can call directly. This tool comes with no guarantee.
+        </p>
+      </section>
+    </div>
 
 
-    <h2>Step 1 - Load an image and mark known locations</h2>
-    <p>Select a photo and locate at least 5 points that you can locate on the map. Please be as acurate as possible! The more points, the more accurate the localisation will be.</p>
-    <input type="file" name="inpfile" id="inpFile">
-    <div id="container"></div>
-    
-    <h2>Step 2 - Mark same known locations on the map</h2>
-    <p>Locate the same points on the map below. Please ensure to match them correctly ('A' on the map must correspond to 'A' on the picture). And, again, please be as accurate as possible.</p>
-    <div id="map"></div>
+    <!-- Toasts & status helpers -->
+    <script>
+      function showToast(message, kind) {
+        const el = document.createElement("div");
+        el.className = "toast" + (kind ? " " + kind : "");
+        el.textContent = message;
+        document.getElementById("toasts").appendChild(el);
+        setTimeout(() => {
+          el.style.transition = "opacity 0.3s ease";
+          el.style.opacity = "0";
+          setTimeout(() => el.remove(), 300);
+        }, 3800);
+      }
 
-    <h2>Step 3:</h2>
-    <p>well... Just click! A new marker will appear on the map to indicate the computed location of the photographer.</p>
-    <div ><button onclick="locatePhotographer()">Locate</button></div>
-
-    <h2>About this tool</h2>
-    <p>
-        Worried about privacy? Only the coordinates of the points on the picture (x, y) and on the map (latitude, longitude) are sent to the server.
-        The picture never leaves your browser.
-    </p>
-    <p>
-        This is an open source toy project.
-        The code can be found on GitHub. TODO
-        The server (which computes the location of the photographer) provides a JSon API that can be called directly.
-        Just check what your browser is doing in the background to find out.
-    </p>
-    <p>
-        Nope... I am definitively not a UX expert...
-    </p>
-    <p>This tool comes with no guarantee.</p>
-
+      function updateStatus() {
+        const pic = markerLayer.getChildren().length;
+        const mapN = mapMarkers.length;
+        document.getElementById("picCount").textContent = pic + (pic === 1 ? " point" : " points");
+        document.getElementById("mapCount").textContent = mapN + (mapN === 1 ? " point" : " points");
+        const status = document.getElementById("statusMsg");
+        if (pic < 3 || mapN < 3) {
+          status.textContent = "Place at least 3 matching points on both sides.";
+        } else if (pic !== mapN) {
+          status.textContent = "Picture has " + pic + " points, map has " + mapN + " — they must match.";
+        } else {
+          status.textContent = "Ready — " + pic + " points paired.";
+        }
+      }
+    </script>
 
     <!-- Loading and marking the picture -->
-    <script>     
-      
+    <script>
+
       //
       // Set up the picture viewer/marker
       //
@@ -98,7 +405,7 @@
       var stage = new Konva.Stage({
         container: 'container',
         width: container.clientWidth,
-        height: 100,
+        height: 90,
       });
       var picLayer = new Konva.Layer();
       var markerLayer = new Konva.Layer();
@@ -145,11 +452,11 @@
           setPicture(this.result);
         });
         reader.readAsDataURL(file);
-      });      
-      
+      });
+
       //
       // Detect left click on the picture to add a marker
-      //      
+      //
       stage.on('click', function(e) {
         if (e.target.className == "Image" && e.evt.button == 0) {
           x = e.evt.layerX;
@@ -217,9 +524,10 @@
         markerLayer.add(tooltip);
         renamePictureMarkers();
         markerLayer.draw();
+        updateStatus();
         return tooltip;
       }
-      
+
       //
       // Remove a marker on the picture
       //
@@ -227,8 +535,9 @@
         marker.destroy();
         renamePictureMarkers();
         markerLayer.draw();
+        updateStatus();
       }
-      
+
       //
       // Removes all markers on the picture
       //
@@ -237,6 +546,7 @@
           marker.destroy();
         });
         markerLayer.draw();
+        updateStatus();
       }
 
       //
@@ -260,6 +570,7 @@
     <script>
       var map;
       var mapMarkers = []; // the list of markers added on the map
+      var photographerMarker = null; // the computed photographer marker, if any
       // Library classes, resolved asynchronously in initMap().
       var AdvancedMarkerElement, PinElement;
 
@@ -325,6 +636,7 @@
         mapMarkers.push(marker);
         // Ensure they are named in contiguous alpha order (also sets the label).
         renameMapMarkers();
+        updateStatus();
       }
 
       //
@@ -336,6 +648,7 @@
         });
         marker.map = null;
         renameMapMarkers();
+        updateStatus();
       }
 
       //
@@ -346,6 +659,7 @@
           marker.map = null;
         });
         mapMarkers = [];
+        updateStatus();
       }
 
       //
@@ -386,6 +700,26 @@
       }
 
       //
+      // Show the computed result in the result panel.
+      //
+      function showResult(location, errorMeters) {
+          const lat = location[0];
+          const lng = location[1];
+          document.getElementById("resultCoords").textContent =
+              lat.toFixed(5) + ", " + lng.toFixed(5);
+          const acc = document.getElementById("resultAccuracy");
+          if (typeof errorMeters === "number") {
+              acc.style.display = "";
+              acc.textContent = "± " + Math.round(errorMeters) + " m";
+          } else {
+              acc.style.display = "none";
+          }
+          document.getElementById("resultMapsLink").href =
+              "https://www.google.com/maps/search/?api=1&query=" + lat + "," + lng;
+          document.getElementById("result").style.display = "flex";
+      }
+
+      //
       // Collect the data from the page, call the server and add a marker for the photographer on the map.
       //
       function locatePhotographer() {
@@ -394,15 +728,15 @@
           numPicMarkers = markerLayer.getChildren().length;
           numMapMarkers = mapMarkers.length;
           if (numPicMarkers < 3) {
-              alert("At least three markers are required on the picture!");
+              showToast("At least three markers are required on the picture.", "error");
               return
           }
           if (numMapMarkers < 3) {
-              alert("At least three markers are required on the map!");
+              showToast("At least three markers are required on the map.", "error");
               return
           }
           if (numMapMarkers != numPicMarkers) {
-              alert("The number of markers on the picture and on the map must be equal!");
+              showToast("The picture and the map must have the same number of markers.", "error");
               return
           }
 
@@ -412,20 +746,23 @@
               headers: {
                   'Content-Type': 'application/json',
               },
-              //body: JSON.stringify(payload),
               body: buildJsonMessage(),
           })
           .then(response => response.json())
           .then(data => {
               console.log('Recv:', data);
               if (data.status != "ok") {
-                  alert(data.status);
+                  showToast(data.status, "error");
                   return
               }
               // Add a marker at the photographer location.
               loc = {lat: data.location[0], lng: data.location[1]};
+              // Remove a previous photographer marker, if any.
+              if (photographerMarker) {
+                  photographerMarker.map = null;
+              }
               const photographerPin = makePin("X");
-              const marker = new AdvancedMarkerElement({
+              photographerMarker = new AdvancedMarkerElement({
                   position: loc,
                   content: photographerPin,
                   map: map,
@@ -433,14 +770,33 @@
               // Right click on marker deletes it.
               photographerPin.addEventListener("contextmenu", (event) => {
                   event.preventDefault();
-                  marker.map = null;
+                  photographerMarker.map = null;
+                  photographerMarker = null;
               });
-              // Center map on photographer.
-              map.setCenter(loc)
+              // Center map on photographer and surface the result.
+              map.setCenter(loc);
+              showResult(data.location, data.error);
+              showToast("Photographer located.", "success");
           })
           .catch((error) => {
               console.error('Error:', error);
+              showToast("Could not reach the server. Please try again.", "error");
           });
+      }
+
+      //
+      // Clear everything and start over.
+      //
+      function resetAll() {
+          removeAllPicturesMarkers();
+          removeAllMapMarkers();
+          if (photographerMarker) {
+              photographerMarker.map = null;
+              photographerMarker = null;
+          }
+          document.getElementById("result").style.display = "none";
+          document.getElementById("examples").value = "--";
+          updateStatus();
       }
     </script>
 
@@ -450,7 +806,7 @@
       var select = document.getElementById("examples");
 
       //
-      // Set the list of examples. 
+      // Set the list of examples.
       //
       function setListOfExamples() {
         // First add an empty option
@@ -458,7 +814,7 @@
             option.name = "--";
             option.text = "--";
             select.appendChild(option);
-        // Set the list of examples from the server  
+        // Set the list of examples from the server
         fetch('../examples/', {
           method: 'GET',
         })
@@ -469,7 +825,7 @@
             option = document.createElement("option");
             option.name = element;
             option.text = element;
-            select.appendChild(option);  
+            select.appendChild(option);
           });
         })
       }
