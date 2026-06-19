@@ -642,9 +642,10 @@
         if (e.target === stage || e.target.className == "Image") {
           return;
         };
-        // move up in the hierarchy to (possibly) find a label element (rather than one of its subelement)
-        curTarget = e.target;
-        while (curTarget.className != "Label") {
+        // Move up the hierarchy to the marker group (rather than the path/text
+        // sub-element that was actually clicked).
+        let curTarget = e.target;
+        while (curTarget.name() != "picMarker") {
           if (!curTarget.parent) {
             return;
           }
@@ -654,50 +655,65 @@
       });
 
       //
+      // Builds a teardrop pin matching the Google Maps markers: red balloon,
+      // dark-red border, white letter glyph, soft drop shadow. The pin's tip is
+      // anchored at the group's position (offset), so positioning a marker puts
+      // the tip exactly on the clicked point — just like a map pin.
+      //
+      function makePicturePin() {
+        const group = new Konva.Group({ draggable: true, name: 'picMarker' });
+        const pin = new Konva.Path({
+          data: 'M13,0 C5.82,0 0,5.82 0,13 C0,22.75 13,38 13,38 C13,38 26,22.75 26,13 C26,5.82 20.18,0 13,0 Z',
+          fill: '#EA4335',
+          stroke: '#B31412',
+          strokeWidth: 1,
+          shadowColor: 'black',
+          shadowBlur: 4,
+          shadowOpacity: 0.3,
+          shadowOffset: { x: 0, y: 2 },
+        });
+        const text = new Konva.Text({
+          text: '?',
+          fontFamily: 'Roboto, Arial, sans-serif',
+          fontStyle: 'bold',
+          fontSize: 14,
+          fill: 'white',
+          width: 26,
+          height: 26,
+          align: 'center',
+          verticalAlign: 'middle',
+          listening: false,
+        });
+        group.add(pin);
+        group.add(text);
+        group.offset({ x: 13, y: 38 });
+        return group;
+      }
+
+      //
       // Add a marker on the picture
       //
       function addPictureMarker(x, y) {
-        var tooltip = new Konva.Label({
-          x: x,
-          y: y,
-          opacity: 0.75,
-          draggable: true,
-        });
-        tooltip.add(
-          new Konva.Tag({
-            fill: 'black',
-            pointerDirection: 'down',
-            pointerWidth: 18,
-            pointerHeight: 20,
-          })
-        );
-        tooltip.add(
-          new Konva.Text({
-            text: "?",
-            fontFamily: 'Calibri',
-            fontSize: 18,
-            padding: 5,
-            fill: 'white',
-          })
-        );
-        // add cursor styling and detect mouse over marker
-        tooltip.on('mouseover', function () {
+        const marker = makePicturePin();
+        marker.position({ x: x, y: y });
+        // Cursor feedback on hover.
+        marker.on('mouseover', function () {
           document.body.style.cursor = 'pointer';
         });
-        tooltip.on('mouseout', function () {
+        marker.on('mouseout', function () {
           document.body.style.cursor = 'default';
         });
         // Re-sort labels after a drag (a dragged marker may change order).
-        tooltip.on('dragend', function () {
+        marker.on('dragend', function () {
           renamePictureMarkers();
           markerLayer.draw();
         });
         // Draw the marker
-        markerLayer.add(tooltip);
+        markerLayer.add(marker);
         renamePictureMarkers();
         markerLayer.draw();
         updateStatus();
-        return tooltip;
+        return marker;
       }
 
       //
@@ -730,8 +746,9 @@
         markerLayer.getChildren().slice(0).sort(function (a, b) {
           return a.getPosition().x - b.getPosition().x;
         }).forEach(marker => {
-          if (marker.getText()) {
-            marker.getText().text(POINT_LABELS[i++]);
+          const text = marker.findOne('Text');
+          if (text) {
+            text.text(POINT_LABELS[i++]);
           };
         });
       }
