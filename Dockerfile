@@ -42,4 +42,7 @@ EXPOSE 8000
 
 # GOOGLE_MAPS_API_KEY is read from the environment at runtime (never baked in):
 #   docker run -p 8000:8000 -e GOOGLE_MAPS_API_KEY=... <image>
-CMD ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8000"]
+#
+# Listen on $PORT when provided (e.g. Cloud Run sets it), defaulting to 8000.
+# `exec` makes uvicorn PID 1 so it receives SIGTERM for graceful shutdown.
+CMD ["sh", "-c", "exec uvicorn server:app --host 0.0.0.0 --port ${PORT:-8000}"]
