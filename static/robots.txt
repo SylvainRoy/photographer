@@ -1,0 +1,8 @@
+# robots.txt for https://photographer-754179442972.europe-west1.run.app
+# Allow crawling the app homepage; keep bots off the JSON API and data paths.
+User-agent: *
+Allow: /$
+Allow: /index.html
+Disallow: /locate/
+Disallow: /examples/
+Disallow: /data/

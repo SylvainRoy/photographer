@@ -75,8 +75,8 @@ async def get_example(name: str):
         data["picture"] = dir / data["picture"]
         return data
 
-@app.get("/", response_class=HTMLResponse)
-@app.get("/index.html", response_class=HTMLResponse)
+@app.api_route("/", methods=["GET", "HEAD"], response_class=HTMLResponse)
+@app.api_route("/index.html", methods=["GET", "HEAD"], response_class=HTMLResponse)
 async def index():
     """Serve index.html with the Google Maps API key injected from the
     environment, so the key never lives in the source tree."""
